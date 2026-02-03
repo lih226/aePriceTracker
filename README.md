@@ -64,10 +64,6 @@ To run the **full application integration tests** (testing tracking, alerts, and
 python test_app_flow.py
 ```
 
-This will check if the scraper correctly identifies prices and sale info for:
-*   `AESaleItem.html` (Sale item)
-*   `AENonsaleItem.html` (Regular price item)
-
 ### Checking the Database
 You can inspect the database directly using `sqlite3` or Python.
 
