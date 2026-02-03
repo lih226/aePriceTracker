@@ -291,5 +291,39 @@ class TestAEPriceTracker(unittest.TestCase):
         self.assertEqual(data['name'], 'Item 1')
         print("  -> Success: API endpoints return correct JSON structures.")
 
+    @patch('app.fetch_product_data')
+    def test_stateless_scrape(self, mock_fetch):
+        """Test the stateless /api/scrape endpoint"""
+        print("\n[TEST] Verifying stateless scrape endpoint...")
+        
+        # Mock successful scrape
+        mock_fetch.return_value = {
+            'name': 'Stateless Hoodie',
+            'current_price': 29.99,
+            'list_price': 49.99,
+            'image_url': 'http://stateless.com/img.jpg'
+        }
+
+        # Send request
+        payload = {'url': 'https://www.ae.com/us/en/p/stateless-hoodie'}
+        response = self.client.post('/api/scrape', 
+                                  data=json.dumps(payload),
+                                  content_type='application/json')
+
+        # Assertions
+        self.assertEqual(response.status_code, 200)
+        data = response.get_json()
+        
+        # Check response structure
+        self.assertEqual(data['name'], 'Stateless Hoodie')
+        self.assertEqual(data['current_price'], 29.99)
+        
+        # KEY ASSERTION: Ensure NOTHING was saved to DB
+        with app.app_context():
+            count = Product.query.filter_by(name='Stateless Hoodie').count()
+            self.assertEqual(count, 0, "Stateless scrape should NOT save to DB")
+            
+        print("  -> Success: Scrape returned data and DB remains empty.")
+
 if __name__ == '__main__':
     unittest.main()
