@@ -1,0 +1,952 @@
+Background scheduler started - checking prices daily at 9:00 AM and hourly
+
+==================================================
+  AE Price Tracker - Web Application
+  Running at: http://127.0.0.1:5001
+==================================================
+
+ * Serving Flask app 'app'
+ * Debug mode: on
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on http://127.0.0.1:5001
+Press CTRL+C to quit
+127.0.0.1 - - [02/Feb/2026 18:58:25] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 18:58:43] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 18:58:43] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 18:58:43] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 18:59:23] "POST /api/track HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 18:59:25] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 18:59:25] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 18:59:25] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 18:59:43] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 18:59:43] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 18:59:43] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:00:19] "POST /api/track HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:00:21] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:00:21] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:00:21] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:00:47] "GET /api/product/8 HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:01:02] "POST /api/refresh/8 HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/Users/lisa/Documents/aePriceTracker/app.py", line 203, in refresh_product
+    from emailer import send_price_alert
+  File "/Users/lisa/Documents/aePriceTracker/emailer.py", line 62
+    List Price: ${list_price:.2f} if list_price else 'N/A'}
+                                                          ^
+SyntaxError: f-string: single '}' is not allowed
+127.0.0.1 - - [02/Feb/2026 19:02:08] "POST /api/track HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:02:10] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:02:10] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:02:10] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:02:19] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:02:19] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:02:19] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:02:23] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:02:23] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:02:23] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:02:37] "GET /api/product/2 HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:02:59] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:02:59] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:02:59] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:03:01] "GET /api/product/8 HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:03:58] "POST /api/track HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:03:59] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:03:59] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:03:59] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:05:41] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:05:41] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:05:41] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:05:57] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:05:57] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:05:57] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:06:20] "POST /api/track HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:06:22] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:06:22] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:06:22] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:07:33] "GET /api/product/9 HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:07:37] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:07:37] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:07:37] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:09:10] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:09:10] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:09:10] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:15:53] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:15:53] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:15:53] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:15:54] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:15:54] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:15:54] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:15:59] "DELETE /api/product/8 HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:16:02] "GET /api/product/9 HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:16:12] "DELETE /api/product/9 HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:16:18] "POST /api/track HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:16:19] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:16:19] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:16:19] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:18:35] "POST /api/track HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:18:37] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:18:37] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:18:37] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:20:36] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:20:36] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:20:36] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:20:36] "GET /favicon.ico HTTP/1.1" 404 -
+127.0.0.1 - - [02/Feb/2026 19:20:56] "GET /api/product/12 HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:21:16] "POST /api/alert HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/Users/lisa/Documents/aePriceTracker/app.py", line 116, in create_alert
+    from emailer import send_alert_confirmation
+  File "/Users/lisa/Documents/aePriceTracker/emailer.py", line 62
+    List Price: ${list_price:.2f} if list_price else 'N/A'}
+                                                          ^
+SyntaxError: f-string: single '}' is not allowed
+127.0.0.1 - - [02/Feb/2026 19:21:18] "POST /api/alert HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/Users/lisa/Documents/aePriceTracker/app.py", line 116, in create_alert
+    from emailer import send_alert_confirmation
+  File "/Users/lisa/Documents/aePriceTracker/emailer.py", line 62
+    List Price: ${list_price:.2f} if list_price else 'N/A'}
+                                                          ^
+SyntaxError: f-string: single '}' is not allowed
+127.0.0.1 - - [02/Feb/2026 19:21:22] "POST /api/alert HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/Users/lisa/Documents/aePriceTracker/app.py", line 116, in create_alert
+    from emailer import send_alert_confirmation
+  File "/Users/lisa/Documents/aePriceTracker/emailer.py", line 62
+    List Price: ${list_price:.2f} if list_price else 'N/A'}
+                                                          ^
+SyntaxError: f-string: single '}' is not allowed
+127.0.0.1 - - [02/Feb/2026 19:21:23] "POST /api/alert HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/Users/lisa/Documents/aePriceTracker/app.py", line 116, in create_alert
+    from emailer import send_alert_confirmation
+  File "/Users/lisa/Documents/aePriceTracker/emailer.py", line 62
+    List Price: ${list_price:.2f} if list_price else 'N/A'}
+                                                          ^
+SyntaxError: f-string: single '}' is not allowed
+127.0.0.1 - - [02/Feb/2026 19:22:21] "GET /api/products HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:22:27] "POST /api/alert HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/Users/lisa/Documents/aePriceTracker/app.py", line 116, in create_alert
+    from emailer import send_alert_confirmation
+  File "/Users/lisa/Documents/aePriceTracker/emailer.py", line 62
+    List Price: ${list_price:.2f} if list_price else 'N/A'}
+                                                          ^
+SyntaxError: f-string: single '}' is not allowed
+127.0.0.1 - - [02/Feb/2026 19:22:55] "POST /api/alert HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:24:34] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:24:34] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:24:34] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:24:36] "GET /api/product/12 HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:24:47] "POST /api/alert HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:27:13] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:27:13] "GET /static/css/style.css HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:27:13] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:27:19] "GET /unsubscribe/015734c5-a534-43b7-8cf4-7d509993a544 HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:27:19] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:35:19] "GET /unsubscribe/07204f59-5fd1-4583-a1ac-316908608a8a HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:35:19] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:39:23] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:39:23] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:39:23] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:39:24] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:39:24] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:39:24] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:41:47] "POST /api/track HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:41:49] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:41:49] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:41:49] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:41:51] "GET /api/product/12 HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:42:00] "GET /api/product/11 HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:42:56] "GET /api/product/12 HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:43:09] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:43:09] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:43:09] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:43:10] "GET /api/product/12 HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:43:13] "POST /api/refresh/12 HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:43:13] "POST /api/refresh/12 HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:45:03] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:45:03] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:45:03] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:45:04] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:45:04] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:45:04] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:45:06] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:45:06] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:45:06] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:45:16] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:45:16] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:45:16] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 19:45:17] "GET /api/product/11 HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:45:23] "POST /api/refresh/11 HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 19:45:27] "GET /api/product/12 HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 21:17:28] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 21:17:28] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 21:17:28] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 21:18:06] "POST /api/track HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1964, in _exec_single_context
+    self.dialect.do_execute(
+    ^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/default.py", line 942, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlite3.OperationalError: attempt to write a readonly database
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/Users/lisa/Documents/aePriceTracker/app.py", line 67, in track_product
+    name=product_data['name'],
+    ^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/scoping.py", line 938, in flush
+    return self._proxied.flush(objects=objects)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 4353, in flush
+    self._flush(objects)
+    ~~~~~~~~~~~^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 4488, in _flush
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py", line 146, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 4449, in _flush
+    flush_context.execute()
+    ~~~~~~~~~~~~~~~~~~~~~^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/unitofwork.py", line 466, in execute
+    rec.execute(self)
+    ~~~~~~~~~~~^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/unitofwork.py", line 642, in execute
+    util.preloaded.orm_persistence.save_obj(
+    ^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/persistence.py", line 93, in save_obj
+    _emit_insert_statements(
+    ^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/persistence.py", line 1233, in _emit_insert_statements
+    result = connection.execute(
+    
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1416, in execute
+    return meth(
+    
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/sql/elements.py", line 523, in _execute_on_connection
+    return connection._execute_clauseelement(
+    
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1638, in _execute_clauseelement
+    ret = self._execute_context(
+    
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1843, in _execute_context
+    return self._exec_single_context(
+    
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1983, in _exec_single_context
+    self._handle_dbapi_exception(
+    ^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 2352, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1964, in _exec_single_context
+    self.dialect.do_execute(
+    ^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/default.py", line 942, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) attempt to write a readonly database
+[SQL: INSERT INTO products (url, name, current_price, list_price, image_url, created_at, last_checked) VALUES (?, ?, ?, ?, ?, ?, ?)]
+[parameters: ('https://www.ae.com/us/en/p/women/loungewear-pjs/pajamas-pj-sets/ae-snoopy-valentines-day-flannel-pj-set/0575_1346_183', "AE Snoopy Valentine's Day Flannel PJ Set", 33.71, 44.95, '//s7d2.scene7.com/is/image/aeo/0575_1346_183_of', '2026-02-03 02:18:06.472346', '2026-02-03 02:18:06.472355')]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+127.0.0.1 - - [02/Feb/2026 21:18:12] "POST /api/track HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1964, in _exec_single_context
+    self.dialect.do_execute(
+    ^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/default.py", line 942, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlite3.OperationalError: attempt to write a readonly database
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/Users/lisa/Documents/aePriceTracker/app.py", line 67, in track_product
+    name=product_data['name'],
+    ^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/scoping.py", line 938, in flush
+    return self._proxied.flush(objects=objects)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 4353, in flush
+    self._flush(objects)
+    ~~~~~~~~~~~^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 4488, in _flush
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py", line 146, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 4449, in _flush
+    flush_context.execute()
+    ~~~~~~~~~~~~~~~~~~~~~^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/unitofwork.py", line 466, in execute
+    rec.execute(self)
+    ~~~~~~~~~~~^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/unitofwork.py", line 642, in execute
+    util.preloaded.orm_persistence.save_obj(
+    ^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/persistence.py", line 93, in save_obj
+    _emit_insert_statements(
+    ^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/persistence.py", line 1233, in _emit_insert_statements
+    result = connection.execute(
+    
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1416, in execute
+    return meth(
+    
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/sql/elements.py", line 523, in _execute_on_connection
+    return connection._execute_clauseelement(
+    
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1638, in _execute_clauseelement
+    ret = self._execute_context(
+    
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1843, in _execute_context
+    return self._exec_single_context(
+    
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1983, in _exec_single_context
+    self._handle_dbapi_exception(
+    ^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 2352, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1964, in _exec_single_context
+    self.dialect.do_execute(
+    ^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/default.py", line 942, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) attempt to write a readonly database
+[SQL: INSERT INTO products (url, name, current_price, list_price, image_url, created_at, last_checked) VALUES (?, ?, ?, ?, ?, ?, ?)]
+[parameters: ('https://www.ae.com/us/en/p/women/loungewear-pjs/pajamas-pj-sets/ae-snoopy-valentines-day-flannel-pj-set/0575_1346_183', "AE Snoopy Valentine's Day Flannel PJ Set", 33.71, 44.95, '//s7d2.scene7.com/is/image/aeo/0575_1346_183_of', '2026-02-03 02:18:12.427725', '2026-02-03 02:18:12.427731')]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+127.0.0.1 - - [02/Feb/2026 21:18:13] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 21:18:13] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 21:18:13] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 21:18:15] "POST /api/track HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1964, in _exec_single_context
+    self.dialect.do_execute(
+    ^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/default.py", line 942, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlite3.OperationalError: attempt to write a readonly database
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/Users/lisa/Documents/aePriceTracker/app.py", line 67, in track_product
+    name=product_data['name'],
+    ^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/scoping.py", line 938, in flush
+    return self._proxied.flush(objects=objects)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 4353, in flush
+    self._flush(objects)
+    ~~~~~~~~~~~^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 4488, in _flush
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py", line 146, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 4449, in _flush
+    flush_context.execute()
+    ~~~~~~~~~~~~~~~~~~~~~^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/unitofwork.py", line 466, in execute
+    rec.execute(self)
+    ~~~~~~~~~~~^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/unitofwork.py", line 642, in execute
+    util.preloaded.orm_persistence.save_obj(
+    ^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/persistence.py", line 93, in save_obj
+    _emit_insert_statements(
+    ^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/persistence.py", line 1233, in _emit_insert_statements
+    result = connection.execute(
+    
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1416, in execute
+    return meth(
+    
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/sql/elements.py", line 523, in _execute_on_connection
+    return connection._execute_clauseelement(
+    
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1638, in _execute_clauseelement
+    ret = self._execute_context(
+    
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1843, in _execute_context
+    return self._exec_single_context(
+    
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1983, in _exec_single_context
+    self._handle_dbapi_exception(
+    ^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 2352, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1964, in _exec_single_context
+    self.dialect.do_execute(
+    ^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/default.py", line 942, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) attempt to write a readonly database
+[SQL: INSERT INTO products (url, name, current_price, list_price, image_url, created_at, last_checked) VALUES (?, ?, ?, ?, ?, ?, ?)]
+[parameters: ('https://www.ae.com/us/en/p/women/loungewear-pjs/pajamas-pj-sets/ae-snoopy-valentines-day-flannel-pj-set/0575_1346_183', "AE Snoopy Valentine's Day Flannel PJ Set", 33.71, 44.95, '//s7d2.scene7.com/is/image/aeo/0575_1346_183_of', '2026-02-03 02:18:15.911580', '2026-02-03 02:18:15.911586')]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+Run time of job "init_scheduler.<locals>.<lambda> (trigger: interval[1:00:00], next run at: 2026-02-02 19:58:18 EST)" was missed by 0:20:09.244097
+127.0.0.1 - - [02/Feb/2026 21:19:06] "POST /api/track HTTP/1.1" 400 -
+127.0.0.1 - - [02/Feb/2026 21:20:19] "POST /api/track HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1964, in _exec_single_context
+    self.dialect.do_execute(
+    ^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/default.py", line 942, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlite3.OperationalError: attempt to write a readonly database
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/Users/lisa/Documents/aePriceTracker/app.py", line 67, in track_product
+    current_price = product_data.get('current_price')
+    ^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/scoping.py", line 938, in flush
+    return self._proxied.flush(objects=objects)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 4353, in flush
+    self._flush(objects)
+    ~~~~~~~~~~~^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 4488, in _flush
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py", line 146, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 4449, in _flush
+    flush_context.execute()
+    ~~~~~~~~~~~~~~~~~~~~~^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/unitofwork.py", line 466, in execute
+    rec.execute(self)
+    ~~~~~~~~~~~^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/unitofwork.py", line 642, in execute
+    util.preloaded.orm_persistence.save_obj(
+    ^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/persistence.py", line 93, in save_obj
+    _emit_insert_statements(
+    ^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/persistence.py", line 1233, in _emit_insert_statements
+    result = connection.execute(
+    
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1416, in execute
+    return meth(
+    
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/sql/elements.py", line 523, in _execute_on_connection
+    return connection._execute_clauseelement(
+    
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1638, in _execute_clauseelement
+    ret = self._execute_context(
+    
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1843, in _execute_context
+    return self._exec_single_context(
+    
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1983, in _exec_single_context
+    self._handle_dbapi_exception(
+    ^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 2352, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1964, in _exec_single_context
+    self.dialect.do_execute(
+    ^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/default.py", line 942, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) attempt to write a readonly database
+[SQL: INSERT INTO products (url, name, current_price, list_price, image_url, created_at, last_checked) VALUES (?, ?, ?, ?, ?, ?, ?)]
+[parameters: ('https://www.ae.com/us/en/p/men/hoodies-sweatshirts/pullover-hoodies-sweatshirts/ae-colorblock-quarter-zip-sweatshirt/1186_2809_100', 'AE Colorblock Quarter-Zip Sweatshirt', 48.71, 64.95, '//s7d2.scene7.com/is/image/aeo/1186_2809_100_l1', '2026-02-03 02:20:19.469916', '2026-02-03 02:20:19.469926')]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+127.0.0.1 - - [02/Feb/2026 21:20:20] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 21:20:20] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 21:20:20] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 21:20:22] "POST /api/track HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1964, in _exec_single_context
+    self.dialect.do_execute(
+    ^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/default.py", line 942, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlite3.OperationalError: attempt to write a readonly database
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/Users/lisa/Documents/aePriceTracker/app.py", line 67, in track_product
+    current_price = product_data.get('current_price')
+    ^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/scoping.py", line 938, in flush
+    return self._proxied.flush(objects=objects)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 4353, in flush
+    self._flush(objects)
+    ~~~~~~~~~~~^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 4488, in _flush
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py", line 146, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 4449, in _flush
+    flush_context.execute()
+    ~~~~~~~~~~~~~~~~~~~~~^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/unitofwork.py", line 466, in execute
+    rec.execute(self)
+    ~~~~~~~~~~~^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/unitofwork.py", line 642, in execute
+    util.preloaded.orm_persistence.save_obj(
+    ^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/persistence.py", line 93, in save_obj
+    _emit_insert_statements(
+    ^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/persistence.py", line 1233, in _emit_insert_statements
+    result = connection.execute(
+    
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1416, in execute
+    return meth(
+    
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/sql/elements.py", line 523, in _execute_on_connection
+    return connection._execute_clauseelement(
+    
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1638, in _execute_clauseelement
+    ret = self._execute_context(
+    
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1843, in _execute_context
+    return self._exec_single_context(
+    
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1983, in _exec_single_context
+    self._handle_dbapi_exception(
+    ^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 2352, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1964, in _exec_single_context
+    self.dialect.do_execute(
+    ^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/default.py", line 942, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) attempt to write a readonly database
+[SQL: INSERT INTO products (url, name, current_price, list_price, image_url, created_at, last_checked) VALUES (?, ?, ?, ?, ?, ?, ?)]
+[parameters: ('https://www.ae.com/us/en/p/men/hoodies-sweatshirts/pullover-hoodies-sweatshirts/ae-colorblock-quarter-zip-sweatshirt/1186_2809_100', 'AE Colorblock Quarter-Zip Sweatshirt', 48.71, 64.95, '//s7d2.scene7.com/is/image/aeo/1186_2809_100_l1', '2026-02-03 02:20:22.766044', '2026-02-03 02:20:22.766052')]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+127.0.0.1 - - [02/Feb/2026 21:20:39] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 21:20:39] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 21:20:39] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 21:20:42] "POST /api/track HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1964, in _exec_single_context
+    self.dialect.do_execute(
+    ^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/default.py", line 942, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlite3.OperationalError: attempt to write a readonly database
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/Users/lisa/Documents/aePriceTracker/app.py", line 67, in track_product
+    current_price = product_data.get('current_price')
+    ^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/scoping.py", line 938, in flush
+    return self._proxied.flush(objects=objects)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 4353, in flush
+    self._flush(objects)
+    ~~~~~~~~~~~^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 4488, in _flush
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py", line 146, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 4449, in _flush
+    flush_context.execute()
+    ~~~~~~~~~~~~~~~~~~~~~^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/unitofwork.py", line 466, in execute
+    rec.execute(self)
+    ~~~~~~~~~~~^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/unitofwork.py", line 642, in execute
+    util.preloaded.orm_persistence.save_obj(
+    ^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/persistence.py", line 93, in save_obj
+    _emit_insert_statements(
+    ^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/persistence.py", line 1233, in _emit_insert_statements
+    result = connection.execute(
+    
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1416, in execute
+    return meth(
+    
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/sql/elements.py", line 523, in _execute_on_connection
+    return connection._execute_clauseelement(
+    
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1638, in _execute_clauseelement
+    ret = self._execute_context(
+    
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1843, in _execute_context
+    return self._exec_single_context(
+    
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1983, in _exec_single_context
+    self._handle_dbapi_exception(
+    ^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 2352, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1964, in _exec_single_context
+    self.dialect.do_execute(
+    ^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/default.py", line 942, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) attempt to write a readonly database
+[SQL: INSERT INTO products (url, name, current_price, list_price, image_url, created_at, last_checked) VALUES (?, ?, ?, ?, ?, ?, ?)]
+[parameters: ('https://www.ae.com/us/en/p/men/hoodies-sweatshirts/pullover-hoodies-sweatshirts/ae-colorblock-quarter-zip-sweatshirt/1186_2809_100', 'AE Colorblock Quarter-Zip Sweatshirt', 48.71, 64.95, '//s7d2.scene7.com/is/image/aeo/1186_2809_100_l1', '2026-02-03 02:20:42.286335', '2026-02-03 02:20:42.286342')]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+127.0.0.1 - - [02/Feb/2026 21:20:44] "POST /api/track HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1964, in _exec_single_context
+    self.dialect.do_execute(
+    ^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/default.py", line 942, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlite3.OperationalError: attempt to write a readonly database
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/Users/lisa/Documents/aePriceTracker/app.py", line 67, in track_product
+    current_price = product_data.get('current_price')
+    ^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/scoping.py", line 938, in flush
+    return self._proxied.flush(objects=objects)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 4353, in flush
+    self._flush(objects)
+    ~~~~~~~~~~~^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 4488, in _flush
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py", line 146, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 4449, in _flush
+    flush_context.execute()
+    ~~~~~~~~~~~~~~~~~~~~~^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/unitofwork.py", line 466, in execute
+    rec.execute(self)
+    ~~~~~~~~~~~^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/unitofwork.py", line 642, in execute
+    util.preloaded.orm_persistence.save_obj(
+    ^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/persistence.py", line 93, in save_obj
+    _emit_insert_statements(
+    ^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/persistence.py", line 1233, in _emit_insert_statements
+    result = connection.execute(
+    
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1416, in execute
+    return meth(
+    
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/sql/elements.py", line 523, in _execute_on_connection
+    return connection._execute_clauseelement(
+    
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1638, in _execute_clauseelement
+    ret = self._execute_context(
+    
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1843, in _execute_context
+    return self._exec_single_context(
+    
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1983, in _exec_single_context
+    self._handle_dbapi_exception(
+    ^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 2352, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1964, in _exec_single_context
+    self.dialect.do_execute(
+    ^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/default.py", line 942, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) attempt to write a readonly database
+[SQL: INSERT INTO products (url, name, current_price, list_price, image_url, created_at, last_checked) VALUES (?, ?, ?, ?, ?, ?, ?)]
+[parameters: ('https://www.ae.com/us/en/p/men/hoodies-sweatshirts/pullover-hoodies-sweatshirts/ae-colorblock-quarter-zip-sweatshirt/1186_2809_100', 'AE Colorblock Quarter-Zip Sweatshirt', 48.71, 64.95, '//s7d2.scene7.com/is/image/aeo/1186_2809_100_l1', '2026-02-03 02:20:44.237927', '2026-02-03 02:20:44.237932')]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+127.0.0.1 - - [02/Feb/2026 21:20:45] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 21:20:45] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 21:20:45] "GET /static/js/app.js HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 21:20:48] "POST /api/track HTTP/1.1" 500 -
+Traceback (most recent call last):
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1964, in _exec_single_context
+    self.dialect.do_execute(
+    ^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/default.py", line 942, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlite3.OperationalError: attempt to write a readonly database
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 1536, in __call__
+    return self.wsgi_app(environ, start_response)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 1514, in wsgi_app
+    response = self.handle_exception(e)
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/opt/anaconda3/lib/python3.13/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/Users/lisa/Documents/aePriceTracker/app.py", line 67, in track_product
+    current_price = product_data.get('current_price')
+    ^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/scoping.py", line 938, in flush
+    return self._proxied.flush(objects=objects)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 4353, in flush
+    self._flush(objects)
+    ~~~~~~~~~~~^^^^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 4488, in _flush
+    with util.safe_reraise():
+         ~~~~~~~~~~~~~~~~~^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/util/langhelpers.py", line 146, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/session.py", line 4449, in _flush
+    flush_context.execute()
+    ~~~~~~~~~~~~~~~~~~~~~^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/unitofwork.py", line 466, in execute
+    rec.execute(self)
+    ~~~~~~~~~~~^^^^^^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/unitofwork.py", line 642, in execute
+    util.preloaded.orm_persistence.save_obj(
+    ^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/persistence.py", line 93, in save_obj
+    _emit_insert_statements(
+    ^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/orm/persistence.py", line 1233, in _emit_insert_statements
+    result = connection.execute(
+    
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1416, in execute
+    return meth(
+    
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/sql/elements.py", line 523, in _execute_on_connection
+    return connection._execute_clauseelement(
+    
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1638, in _execute_clauseelement
+    ret = self._execute_context(
+    
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1843, in _execute_context
+    return self._exec_single_context(
+    
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1983, in _exec_single_context
+    self._handle_dbapi_exception(
+    ^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 2352, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/base.py", line 1964, in _exec_single_context
+    self.dialect.do_execute(
+    ^
+  File "/opt/anaconda3/lib/python3.13/site-packages/sqlalchemy/engine/default.py", line 942, in do_execute
+    cursor.execute(statement, parameters)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) attempt to write a readonly database
+[SQL: INSERT INTO products (url, name, current_price, list_price, image_url, created_at, last_checked) VALUES (?, ?, ?, ?, ?, ?, ?)]
+[parameters: ('https://www.ae.com/us/en/p/men/hoodies-sweatshirts/pullover-hoodies-sweatshirts/ae-colorblock-quarter-zip-sweatshirt/1186_2809_100', 'AE Colorblock Quarter-Zip Sweatshirt', 48.71, 64.95, '//s7d2.scene7.com/is/image/aeo/1186_2809_100_l1', '2026-02-03 02:20:48.353022', '2026-02-03 02:20:48.353030')]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+127.0.0.1 - - [02/Feb/2026 21:22:08] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [02/Feb/2026 21:22:08] "GET /static/css/style.css HTTP/1.1" 304 -
+127.0.0.1 - - [02/Feb/2026 21:22:08] "GET /static/js/app.js HTTP/1.1" 304 -
+/opt/anaconda3/lib/python3.13/multiprocessing/resource_tracker.py:301: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown: {'/mp-37dbhwgp'}
+  warnings.warn(

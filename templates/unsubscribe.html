@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unsubscribe - AE Price Tracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .unsubscribe-card {
+            max-width: 500px;
+            margin: 100px auto;
+            text-align: center;
+            padding: var(--spacing-xl);
+        }
+
+        .status-icon {
+            font-size: 4rem;
+            margin-bottom: var(--spacing-lg);
+            display: block;
+        }
+
+        .success-icon {
+            color: var(--accent-success);
+        }
+
+        .error-icon {
+            color: var(--accent-danger);
+        }
+
+        .btn-home {
+            display: inline-block;
+            margin-top: var(--spacing-lg);
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <header class="header">
+            <div class="logo">
+                <span class="logo-icon">📊</span>
+                <h1>AE Price Tracker</h1>
+            </div>
+        </header>
+
+        <main class="unsubscribe-card glass-card">
+            {% if success %}
+            <span class="status-icon success-icon">✅</span>
+            <h2>Successfully Unsubscribed</h2>
+            <p>You will no longer receive price alerts for <strong>{{ product_name }}</strong>.</p>
+            <p>You can always set a new alert on our website if you change your mind.</p>
+            {% else %}
+            <span class="status-icon error-icon">❌</span>
+            <h2>Unsubscribe Failed</h2>
+            <p>{{ message or "We couldn't find that alert. It may have already been removed." }}</p>
+            {% endif %}
+
+            <a href="/" class="btn-primary btn-home">
+                Return to Tracker
+            </a>
+        </main>
+    </div>
+</body>
+
+</html>
