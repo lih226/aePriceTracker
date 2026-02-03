@@ -49,6 +49,227 @@ The application will be available at [http://127.0.0.1:5001](http://127.0.0.1:50
 3.  **Set Alerts**: Click the bell icon on a product card to set a target price and your email. You'll be notified when the price hits your target.
 4.  **Delete**: Click the trash icon to stop tracking a product.
 
+## API Reference
+
+The application provides a REST API for programmatic access. All endpoints return JSON responses.
+
+### Product Management
+
+#### Track a Product
+```http
+POST /api/track
+Content-Type: application/json
+
+{
+  "url": "https://www.ae.com/us/en/p/product-url"
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Product added successfully",
+  "product": {
+    "id": 1,
+    "name": "AE Product Name",
+    "current_price": 29.99,
+    "list_price": 39.99,
+    "url": "https://www.ae.com/us/en/p/product-url",
+    "image_url": "https://...",
+    "created_at": "2026-02-03T10:00:00Z",
+    "last_checked": "2026-02-03T10:00:00Z"
+  }
+}
+```
+
+#### Get All Products
+```http
+GET /api/products
+```
+
+**Response:**
+```json
+[
+  {
+    "id": 1,
+    "name": "AE Product Name",
+    "current_price": 29.99,
+    "list_price": 39.99,
+    "url": "https://...",
+    "image_url": "https://...",
+    "created_at": "2026-02-03T10:00:00Z",
+    "last_checked": "2026-02-03T10:00:00Z"
+  }
+]
+```
+
+#### Get Product Details
+```http
+GET /api/product/{product_id}
+```
+
+**Response:**
+```json
+{
+  "id": 1,
+  "name": "AE Product Name",
+  "current_price": 29.99,
+  "list_price": 39.99,
+  "url": "https://...",
+  "image_url": "https://...",
+  "created_at": "2026-02-03T10:00:00Z",
+  "last_checked": "2026-02-03T10:00:00Z",
+  "price_history": [
+    {
+      "id": 1,
+      "price": 39.99,
+      "timestamp": "2026-02-03T10:00:00Z"
+    }
+  ],
+  "alerts": []
+}
+```
+
+#### Delete a Product
+```http
+DELETE /api/product/{product_id}
+```
+
+**Response:**
+```json
+{
+  "message": "Product deleted successfully"
+}
+```
+
+#### Refresh Product Price
+```http
+POST /api/refresh/{product_id}
+```
+
+**Response:**
+```json
+{
+  "message": "Price updated",
+  "product": {
+    "id": 1,
+    "name": "AE Product Name",
+    "current_price": 29.99,
+    "last_checked": "2026-02-03T10:05:00Z"
+  }
+}
+```
+
+### Price Alerts
+
+#### Create/Update Alert
+```http
+POST /api/alert
+Content-Type: application/json
+
+{
+  "product_id": 1,
+  "email": "user@example.com",
+  "target_price": 25.00
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Alert created successfully",
+  "alert": {
+    "id": 1,
+    "email": "user@example.com",
+    "target_price": 25.00,
+    "triggered": false,
+    "token": "unique-token-here",
+    "created_at": "2026-02-03T10:00:00Z"
+  }
+}
+```
+
+#### Unsubscribe from Alert
+```http
+GET /unsubscribe/{token}
+```
+
+Returns an HTML page confirming unsubscription.
+
+### Utility Endpoints
+
+#### Scrape Product Data (Preview)
+```http
+POST /api/scrape
+Content-Type: application/json
+
+{
+  "url": "https://www.ae.com/us/en/p/product-url"
+}
+```
+
+**Response:**
+```json
+{
+  "name": "AE Product Name",
+  "current_price": 29.99,
+  "list_price": 39.99,
+  "image_url": "https://..."
+}
+```
+
+#### Check Scheduler Status
+```http
+GET /api/scheduler-status
+```
+
+**Response:**
+```json
+{
+  "scheduler_running": true,
+  "jobs": [
+    {
+      "id": "daily_price_check",
+      "next_run": "2026-02-04T09:00:00",
+      "trigger": "cron[hour='9', minute='0']"
+    }
+  ]
+}
+```
+
+#### Test Price Check (Development)
+```http
+POST /api/test-scheduler
+```
+
+**Response:**
+```json
+{
+  "message": "Price check completed successfully"
+}
+```
+
+### Using the API with curl
+
+**Track a product:**
+```bash
+curl -X POST http://127.0.0.1:5001/api/track \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://www.ae.com/us/en/p/product-url"}'
+```
+
+**Create an alert:**
+```bash
+curl -X POST http://127.0.0.1:5001/api/alert \
+  -H "Content-Type: application/json" \
+  -d '{"product_id": 1, "email": "user@example.com", "target_price": 25.00}'
+```
+
+**Check scheduler status:**
+```bash
+curl http://127.0.0.1:5001/api/scheduler-status
+```
+
 ## Testing & Verification
 
 ### Running Tests

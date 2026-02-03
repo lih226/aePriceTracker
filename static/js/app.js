@@ -190,22 +190,75 @@ async function saveAlert() {
     // For now, let's just save the target price locally and visually indicate it.
 
     const targetPrice = document.getElementById('targetPrice').value;
-    const email = document.getElementById('alertEmail').value.trim(); // We might collect this but not use it yet for pure local
+    const emailInput = document.getElementById('alertEmail');
+    const email = emailInput.value.trim();
 
     if (!targetPrice) {
         showToast('Please set a target price', 'error');
         return;
     }
 
-    // Save alert settings locally
-    Storage.updateProduct(currentProduct.id, {
-        alert_target: parseFloat(targetPrice),
-        alert_email: email // Stored locally for now
-    });
+    // For now, since we don't have a full auth system, 
+    // we always require an email if it's not already stored/known.
+    // The user prompt implies a login check, but we'll stick to the input check for now.
+    if (!email) {
+        showToast('Please enter your email address for alerts', 'error');
+        emailInput.focus();
+        return;
+    }
 
-    showToast('Alert saved locally (Email notifications require login - coming soon)', 'success');
-    closeAlertModal();
-    renderProductsList();
+    const saveBtn = document.getElementById('saveAlertBtn');
+    const originalText = saveBtn.textContent;
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving...';
+
+    try {
+        // 1. Ensure product exists on server to get a real DB ID
+        // (The frontend uses local string IDs, backend uses integer IDs)
+        const trackResponse = await fetch('/api/track', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: currentProduct.url })
+        });
+
+        if (!trackResponse.ok) throw new Error('Failed to sync product with server');
+        const trackData = await trackResponse.json();
+        const serverProductId = trackData.product.id;
+
+        // 2. Create/Update alert on server
+        const alertResponse = await fetch('/api/alert', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                product_id: serverProductId,
+                email: email,
+                target_price: targetPrice
+            })
+        });
+
+        if (!alertResponse.ok) {
+            const err = await alertResponse.json();
+            throw new Error(err.error || 'Failed to create alert');
+        }
+
+        // 3. Update local storage metadata
+        Storage.updateProduct(currentProduct.id, {
+            alert_target: parseFloat(targetPrice),
+            alert_email: email,
+            server_id: serverProductId
+        });
+
+        showToast('Price alert saved! We\'ll email you when the price drops.', 'success');
+        closeAlertModal();
+        renderProductsList();
+
+    } catch (error) {
+        showToast(error.message, 'error');
+        console.error('Alert error:', error);
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = originalText;
+    }
 }
 
 function deleteProduct(productId) {
