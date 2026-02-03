@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 
 
 scheduler = BackgroundScheduler()
+_scheduler_initialized = False
 
 
 def update_all_prices(app):
@@ -76,6 +77,10 @@ def update_all_prices(app):
 
 def init_scheduler(app):
     """Initialize the scheduler with daily price checks"""
+    global _scheduler_initialized
+    if _scheduler_initialized:
+        return  # Already initialized
+    
     # Run every day at 9:00 AM
     scheduler.add_job(
         func=lambda: update_all_prices(app),
@@ -86,17 +91,9 @@ def init_scheduler(app):
         replace_existing=True
     )
     
-    # Also run every hour for testing purposes (can remove in production)
-    scheduler.add_job(
-        func=lambda: update_all_prices(app),
-        trigger='interval',
-        hours=1,
-        id='hourly_price_check',
-        replace_existing=True
-    )
-    
     scheduler.start()
-    print("Background scheduler started - checking prices daily at 9:00 AM and hourly")
+    _scheduler_initialized = True
+    print("Background scheduler started - checking prices daily at 9:00 AM")
 
 
 def shutdown_scheduler():

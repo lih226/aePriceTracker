@@ -30,6 +30,10 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key-please-change')
 # Initialize database
 db.init_app(app)
 
+# Initialize scheduler for both development and production
+init_scheduler(app)
+atexit.register(shutdown_scheduler)
+
 def init_db():
     """Initialize database with necessary configuration"""
     with app.app_context():
@@ -308,17 +312,44 @@ def unsubscribe(token):
     return render_template('unsubscribe.html', success=True, product_name=product_name)
 
 
+@app.route('/api/scheduler-status')
+def scheduler_status():
+    """Check if the scheduler is running and show next run times"""
+    from scheduler import scheduler
+    
+    jobs = []
+    for job in scheduler.get_jobs():
+        jobs.append({
+            'id': job.id,
+            'next_run': job.next_run_time.isoformat() if job.next_run_time else None,
+            'trigger': str(job.trigger)
+        })
+    
+    return jsonify({
+        'scheduler_running': scheduler.running,
+        'jobs': jobs
+    })
+
+
+@app.route('/api/test-scheduler', methods=['POST'])
+def test_scheduler():
+    """Manually trigger the price checking routine for testing"""
+    from scheduler import update_all_prices
+    
+    try:
+        update_all_prices(app)
+        return jsonify({'message': 'Price check completed successfully'})
+    except Exception as e:
+        return jsonify({'error': f'Price check failed: {str(e)}'}), 500
+
 # ============ Run App ============
 
 if __name__ == '__main__':
     import os
     
-    # Initialize scheduler only in the reloader workflow (child process)
-    # or if not using reloader (though we are enabling it now)
+    # Initialize database only in development
     if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
         init_db()
-        init_scheduler(app)
-        atexit.register(shutdown_scheduler)
     
     print("\n" + "="*50)
     print("  AE Price Tracker - Web Application")
