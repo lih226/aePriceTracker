@@ -55,6 +55,23 @@ def index():
 
 # ============ API Routes ============
 
+
+@app.route('/api/scrape', methods=['POST'])
+def scrape_product_data():
+    """Stateless endpoint to fetch product data without saving"""
+    data = request.get_json()
+    url = data.get('url', '').strip()
+    
+    if not url:
+        return jsonify({'error': 'URL is required'}), 400
+        
+    product_data = fetch_product_data(url)
+    if not product_data:
+        return jsonify({'error': 'Could not fetch product data'}), 400
+        
+    return jsonify(product_data)
+
+
 @app.route('/api/track', methods=['POST'])
 def track_product():
     """Add a new product to track"""

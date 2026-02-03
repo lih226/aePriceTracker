@@ -13,17 +13,13 @@ const productDisplay = document.getElementById('productDisplay');
 const alertModal = document.getElementById('alertModal');
 const deleteModal = document.getElementById('deleteModal');
 const toast = document.getElementById('toast');
+const productsList = document.getElementById('productsList');
 
 // ============ Event Listeners ============
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Convert all server-rendered UTC dates to user-friendly relative time
-    document.querySelectorAll('.local-date').forEach(el => {
-        const utc = el.dataset.utc;
-        if (utc) {
-            el.textContent = formatDate(utc);
-        }
-    });
+    loadLocalProducts();
+    // refreshAllPrices(); // Disabled: Only refresh on user request or daily job
 });
 
 trackForm.addEventListener('submit', async (e) => {
@@ -72,13 +68,14 @@ document.getElementById('confirmDeleteBtn')?.addEventListener('click', () => {
     }
 });
 
-// ============ API Functions ============
+// ============ API & Storage Functions ============
 
 async function trackProduct(url) {
     setLoading(true);
 
     try {
-        const response = await fetch('/api/track', {
+        // 1. Scrape data from server (stateless)
+        const response = await fetch('/api/scrape', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ url })
@@ -90,13 +87,21 @@ async function trackProduct(url) {
             throw new Error(data.error || 'Failed to track product');
         }
 
-        currentProduct = data.product;
+        // 2. Save to Local Storage
+        const product = {
+            url: url,
+            ...data // name, current_price, list_price, image_url
+        };
+
+        const savedProduct = Storage.saveProduct(product);
+
+        // 3. Update UI
+        currentProduct = savedProduct;
         displayProduct(currentProduct);
-        showToast(data.message, 'success');
+        showToast('Product tracked locally!', 'success');
         urlInput.value = '';
 
-        // Reload page to update products list
-        setTimeout(() => location.reload(), 1500);
+        renderProductsList(); // Re-render list from local storage
 
     } catch (error) {
         showToast(error.message, 'error');
@@ -106,9 +111,20 @@ async function trackProduct(url) {
 }
 
 async function refreshProduct(productId) {
+    const product = Storage.getProduct(productId);
+    if (!product) return;
+
+    // UI feedback
+    const refreshBtn = document.getElementById('refreshBtn');
+    const originalText = refreshBtn.innerHTML;
+    refreshBtn.disabled = true;
+    refreshBtn.innerHTML = '<span class="btn-loader"></span> Refreshing...';
+
     try {
-        const response = await fetch(`/api/refresh/${productId}`, {
-            method: 'POST'
+        const response = await fetch('/api/scrape', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: product.url })
         });
 
         const data = await response.json();
@@ -117,202 +133,211 @@ async function refreshProduct(productId) {
             throw new Error(data.error || 'Failed to refresh price');
         }
 
-        currentProduct = data.product;
+        // Update local storage
+        const updated = Storage.updateProduct(productId, {
+            current_price: data.current_price,
+            list_price: data.list_price,
+            last_checked: new Date().toISOString()
+        });
+
+        currentProduct = updated;
         displayProduct(currentProduct);
-        updateProductCard(currentProduct);
+        renderProductsList(); // Update card in list
         showToast('Price updated!', 'success');
 
     } catch (error) {
         showToast(error.message, 'error');
+    } finally {
+        refreshBtn.disabled = false;
+        refreshBtn.innerHTML = originalText;
     }
+}
+
+async function refreshAllPrices() {
+    const products = Storage.getProducts();
+    if (products.length === 0) return;
+
+    console.log("Auto-refreshing prices...");
+
+    for (const product of products) {
+        try {
+            const response = await fetch('/api/scrape', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: product.url })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                Storage.updateProduct(product.id, {
+                    current_price: data.current_price,
+                    list_price: data.list_price,
+                    last_checked: new Date().toISOString()
+                });
+            }
+        } catch (e) {
+            console.error("Failed to auto-refresh", product.name, e);
+        }
+    }
+    renderProductsList();
 }
 
 async function saveAlert() {
-    const email = document.getElementById('alertEmail').value.trim();
-    const targetPrice = document.getElementById('targetPrice').value;
+    // Local alert logic (placeholder for now, or sync with server if user authenticated)
+    // For anonymous users, we can't send emails easily without backend storage.
+    // OPTION: We could send the alert config to server to store in a 'guest_alerts' table,
+    // but the prompt asked for localStorage focus. 
+    // For now, let's just save the target price locally and visually indicate it.
 
-    if (!email || !targetPrice) {
-        showToast('Please fill in all fields', 'error');
+    const targetPrice = document.getElementById('targetPrice').value;
+    const email = document.getElementById('alertEmail').value.trim(); // We might collect this but not use it yet for pure local
+
+    if (!targetPrice) {
+        showToast('Please set a target price', 'error');
         return;
     }
 
-    try {
-        const response = await fetch('/api/alert', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                product_id: currentProduct.id,
-                email,
-                target_price: parseFloat(targetPrice)
-            })
-        });
+    // Save alert settings locally
+    Storage.updateProduct(currentProduct.id, {
+        alert_target: parseFloat(targetPrice),
+        alert_email: email // Stored locally for now
+    });
 
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.error || 'Failed to create alert');
-        }
-
-        showToast('Price alert saved! We\'ll email you when the price drops.', 'success');
-        closeAlertModal();
-
-    } catch (error) {
-        showToast(error.message, 'error');
-    }
+    showToast('Alert saved locally (Email notifications require login - coming soon)', 'success');
+    closeAlertModal();
+    renderProductsList();
 }
 
-async function deleteProduct(productId) {
+function deleteProduct(productId) {
     if (typeof closeDeleteModal === 'function') closeDeleteModal();
 
-    try {
-        const response = await fetch(`/api/product/${productId}`, {
-            method: 'DELETE'
-        });
+    Storage.deleteProduct(productId);
+    showToast('Product removed', 'success');
 
-        if (!response.ok) {
-            throw new Error('Failed to delete product');
-        }
-
-        showToast('Product deleted', 'success');
-
-        // Remove card from DOM
-        const card = document.querySelector(`.product-card[data-id="${productId}"]`);
-        if (card) {
-            card.remove();
-        }
-
-        // Hide product display if it's the current one
-        if (currentProduct && currentProduct.id === productId) {
-            productDisplay.hidden = true;
-            currentProduct = null;
-        }
-
-    } catch (error) {
-        showToast(error.message, 'error');
+    // Hide details if open
+    if (currentProduct && currentProduct.id === productId) {
+        productDisplay.hidden = true;
+        currentProduct = null;
     }
+
+    renderProductsList();
 }
 
-async function viewProduct(productId) {
-    try {
-        const response = await fetch(`/api/product/${productId}`);
-        const data = await response.json();
+function viewProduct(productId) {
+    // productId might be string or number depending on generation
+    // Ensure we match types (Storage IDs are strings usually)
+    const product = Storage.getProduct(String(productId));
 
-        if (!response.ok) {
-            throw new Error('Failed to load product');
-        }
-
-        currentProduct = data;
+    if (product) {
+        currentProduct = product;
         displayProduct(currentProduct);
-
-        // Scroll to product display
         productDisplay.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-    } catch (error) {
-        showToast(error.message, 'error');
+    } else {
+        showToast('Product not found', 'error');
     }
 }
 
-async function openAlertForProduct(productId) {
-    try {
-        const response = await fetch(`/api/product/${productId}`);
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error('Failed to load product');
-        }
-
-        currentProduct = data;
+function openAlertForProduct(productId) {
+    const product = Storage.getProduct(String(productId));
+    if (product) {
+        currentProduct = product;
         openAlertModal();
-
-    } catch (error) {
-        showToast(error.message, 'error');
     }
 }
 
 // ============ UI Functions ============
 
+function loadLocalProducts() {
+    renderProductsList();
+}
+
+function renderProductsList() {
+    const products = Storage.getProducts();
+    productsList.innerHTML = '';
+
+    if (products.length === 0) {
+        productsList.innerHTML = '<p class="empty-message">No products tracked yet. Add your first product above!</p>';
+        return;
+    }
+
+    products.forEach(product => {
+        const card = document.createElement('div');
+        card.className = 'product-card glass-card';
+        card.dataset.id = product.id;
+        card.onclick = () => viewProduct(product.id);
+
+        // Calculate visuals
+        const isOnSale = product.list_price && product.current_price < product.list_price;
+        const discount = isOnSale ? Math.round((1 - product.current_price / product.list_price) * 100) : 0;
+        const lastChecked = product.last_checked ? timeAgo(new Date(product.last_checked)) : 'Never';
+        const image = product.image_url || '/static/placeholder.png';
+        const price = product.current_price ? `$${product.current_price.toFixed(2)}` : 'N/A';
+
+        let saleHtml = '';
+        if (isOnSale) {
+            saleHtml = `
+                <span class="card-list-price">$${product.list_price.toFixed(2)}</span>
+                <span class="card-discount">-${discount}%</span>
+            `;
+        }
+
+        // Alert indication
+        const hasAlert = product.alert_target > 0;
+        const alertClass = hasAlert ? 'active' : '';
+
+        card.innerHTML = `
+            <div class="card-image-container">
+                <button class="btn-card-alert ${alertClass}"
+                    onclick="event.stopPropagation(); openAlertForProduct('${product.id}')"
+                    title="Set Price Alert">
+                    <svg class="icon-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                    </svg>
+                </button>
+                <img src="${image}" alt="${product.name}" class="card-image">
+            </div>
+            <div class="card-content">
+                <h4 class="card-title">${product.name}</h4>
+                <div class="card-price-row">
+                    <span class="card-price">${price}</span>
+                    ${saleHtml}
+                </div>
+                <p class="card-checked">Last checked: <span class="local-date">${lastChecked}</span></p>
+            </div>
+            <div class="card-actions">
+                <button class="btn-view">View Details</button>
+                <button class="btn-delete"
+                    onclick="event.stopPropagation(); openDeleteModal('${product.id}')">🗑️</button>
+            </div>
+        `;
+
+        productsList.appendChild(card);
+    });
+}
+
 function formatDate(utcString) {
     if (!utcString) return 'Never';
-
-    // Force UTC by ensuring the string looks like an ISO UTC string (adding Z)
-    // Python's isoformat() might be 2026-01-30T20:10:04 or 2026-01-30 20:10:04
     let dateStr = utcString.replace(' ', 'T');
     if (!dateStr.includes('Z') && !dateStr.includes('+')) {
         dateStr += 'Z';
     }
-
     const date = new Date(dateStr);
     return timeAgo(date);
 }
 
 function timeAgo(date) {
     const seconds = Math.floor((new Date() - date) / 1000);
-
     if (seconds < 30) return 'Just now';
     if (seconds < 60) return seconds + 's ago';
-
     const minutes = Math.floor(seconds / 60);
     if (minutes < 60) return minutes + 'm ago';
-
     const hours = Math.floor(minutes / 60);
     if (hours < 24) return hours + 'h ago';
-
     const days = Math.floor(hours / 24);
     if (days < 30) return days + 'd ago';
-
     return date.toLocaleDateString();
-}
-
-function updateProductCard(product) {
-    const card = document.querySelector(`.product-card[data-id="${product.id}"]`);
-    if (!card) return;
-
-    const priceElem = card.querySelector('.card-price');
-    const rowElem = card.querySelector('.card-price-row');
-    const checkedElem = card.querySelector('.card-checked');
-
-    if (priceElem) {
-        priceElem.textContent = product.current_price
-            ? `$${product.current_price.toFixed(2)}`
-            : 'N/A';
-    }
-
-    // Update sale info in card
-    if (product.is_on_sale) {
-        // Remove existing if any (to re-add in order)
-        const oldList = rowElem.querySelector('.card-list-price');
-        const oldDisc = rowElem.querySelector('.card-discount');
-        if (oldList) oldList.remove();
-        if (oldDisc) oldDisc.remove();
-
-        const listSpan = document.createElement('span');
-        listSpan.className = 'card-list-price';
-        listSpan.textContent = `$${product.list_price.toFixed(2)}`;
-
-        const discSpan = document.createElement('span');
-        discSpan.className = 'card-discount';
-        discSpan.textContent = `-${product.discount_percentage}%`;
-
-        rowElem.appendChild(listSpan);
-        rowElem.appendChild(discSpan);
-    } else {
-        const oldList = rowElem.querySelector('.card-list-price');
-        const oldDisc = rowElem.querySelector('.card-discount');
-        if (oldList) oldList.remove();
-        if (oldDisc) oldDisc.remove();
-    }
-
-    if (checkedElem) {
-        const dateSpan = checkedElem.querySelector('.local-date');
-        const lastChecked = formatDate(product.last_checked);
-
-        if (dateSpan) {
-            dateSpan.textContent = lastChecked;
-            dateSpan.dataset.utc = product.last_checked || '';
-        } else {
-            checkedElem.textContent = `Last checked: ${lastChecked}`;
-        }
-    }
 }
 
 function displayProduct(product) {
@@ -324,10 +349,13 @@ function displayProduct(product) {
     const listPriceElem = document.getElementById('listPrice');
     const discountBadgeElem = document.getElementById('discountBadge');
 
-    if (product.is_on_sale) {
+    const isOnSale = product.list_price && product.current_price < product.list_price;
+
+    if (isOnSale) {
+        const discount = Math.round((1 - product.current_price / product.list_price) * 100);
         listPriceElem.textContent = `$${product.list_price.toFixed(2)}`;
         listPriceElem.hidden = false;
-        discountBadgeElem.textContent = `-${product.discount_percentage}%`;
+        discountBadgeElem.textContent = `-${discount}%`;
         discountBadgeElem.hidden = false;
     } else {
         listPriceElem.hidden = true;
@@ -337,32 +365,27 @@ function displayProduct(product) {
     document.getElementById('productImage').src = product.image_url || '/static/placeholder.png';
     document.getElementById('productLink').href = product.url;
 
-    const lastChecked = formatDate(product.last_checked);
+    const lastChecked = product.last_checked ? formatDate(product.last_checked) : 'Never';
     document.getElementById('lastChecked').textContent = `Last checked: ${lastChecked}`;
 
     productDisplay.hidden = false;
 
     // Update chart
-    updateChart(product.price_history);
+    updateChart(product.price_history || []);
 }
 
 function updateChart(priceHistory) {
+    if (!priceHistory) return;
+
     const ctx = document.getElementById('priceChart').getContext('2d');
+    if (priceChart) priceChart.destroy();
 
-    // Destroy existing chart
-    if (priceChart) {
-        priceChart.destroy();
-    }
-
-    // Prepare data
     const labels = priceHistory.map(p => {
         const date = new Date(p.timestamp);
         return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     });
 
     const prices = priceHistory.map(p => p.price);
-
-    // Create gradient
     const gradient = ctx.createLinearGradient(0, 0, 0, 300);
     gradient.addColorStop(0, 'rgba(59, 130, 246, 0.3)');
     gradient.addColorStop(1, 'rgba(59, 130, 246, 0)');
@@ -425,8 +448,8 @@ function openAlertModal() {
     document.getElementById('modalCurrentPrice').textContent = currentProduct.current_price
         ? `$${currentProduct.current_price.toFixed(2)}`
         : 'N/A';
-    document.getElementById('targetPrice').value = '';
-    document.getElementById('alertEmail').value = '';
+    document.getElementById('targetPrice').value = currentProduct.alert_target || '';
+    document.getElementById('alertEmail').value = currentProduct.alert_email || '';
     alertModal.hidden = false;
 }
 
@@ -447,13 +470,9 @@ function showToast(message, type = 'info') {
     toast.textContent = message;
     toast.className = `toast ${type}`;
     toast.hidden = false;
-
-    // Trigger animation
     requestAnimationFrame(() => {
         toast.classList.add('show');
     });
-
-    // Hide after 4 seconds
     setTimeout(() => {
         toast.classList.remove('show');
         setTimeout(() => {
@@ -478,3 +497,4 @@ function closeDeleteModal() {
 }
 
 window.openDeleteModal = openDeleteModal;
+
