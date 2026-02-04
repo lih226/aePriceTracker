@@ -1,5 +1,6 @@
 # Database Models
 from flask_sqlalchemy import SQLAlchemy
+from flask_login import UserMixin
 from datetime import datetime, timezone
 
 db = SQLAlchemy()
@@ -13,14 +14,17 @@ user_products = db.Table('user_products',
     db.Column('added_at', db.DateTime, default=lambda: datetime.now(timezone.utc))
 )
 
-class User(db.Model):
-    """User account for syncing data across devices"""
+class User(db.Model, UserMixin):
+    """User account for syncing data across devices via Google OAuth"""
     __tablename__ = 'users'
     __table_args__ = {'sqlite_autoincrement': True}
     
     id = db.Column(db.Integer, primary_key=True)
+    google_id = db.Column(db.String(255), unique=True, nullable=True)  # 'sub' from Google
     email = db.Column(db.String(200), unique=True, nullable=False)
-    password_hash = db.Column(db.String(200), nullable=True) # Nullable for now, used later
+    name = db.Column(db.String(255), nullable=True)  # Display name from Google
+    picture = db.Column(db.String(512), nullable=True)  # Profile picture URL
+    password_hash = db.Column(db.String(200), nullable=True)  # Reserved for future use
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     
     # Relationships
@@ -36,7 +40,9 @@ class User(db.Model):
         return {
             'id': self.id,
             'email': self.email,
-            'created_at': self.created_at.isoformat()
+            'name': self.name,
+            'picture': self.picture,
+            'created_at': self.created_at.isoformat() if self.created_at else None
         }
 
 

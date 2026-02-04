@@ -1,13 +1,15 @@
 # AE Price Tracker - Flask Web Application
-from flask import Flask, render_template, request, jsonify, abort
-from models import db, Product, PriceHistory, PriceAlert
+from flask import Flask, render_template, request, jsonify, abort, redirect, url_for
+from flask_login import LoginManager, login_user, logout_user, current_user, login_required
+from authlib.integrations.flask_client import OAuth
+from models import db, Product, PriceHistory, PriceAlert, User
 from scraper import fetch_product_data
 from scheduler import init_scheduler, shutdown_scheduler
+from emailer import send_alert_confirmation, send_price_alert
 from datetime import datetime, timezone
+import os
 import atexit
 import uuid
-
-import os
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -27,26 +29,52 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
 }
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key-please-change')
 
+# Security settings for production
+if os.environ.get('FLASK_ENV') == 'production':
+    app.config['SESSION_COOKIE_SECURE'] = True
+    app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+    # Trust Railway's reverse proxy for HTTPS detection
+    from werkzeug.middleware.proxy_fix import ProxyFix
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+
 # Initialize database
 db.init_app(app)
 
-# Initialize scheduler for both development and production
+# Initialize Flask-Login
+login_manager = LoginManager(app)
+login_manager.login_view = 'login_prompt'
+
+@login_manager.user_loader
+def load_user(user_id):
+    return db.session.get(User, int(user_id))
+
+# Initialize OAuth
+oauth = OAuth(app)
+oauth.register(
+    name='google',
+    client_id=os.environ.get('GOOGLE_CLIENT_ID'),
+    client_secret=os.environ.get('GOOGLE_CLIENT_SECRET'),
+    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+    client_kwargs={'scope': 'openid email profile'}
+)
+
+# Initialize scheduler
 init_scheduler(app)
 atexit.register(shutdown_scheduler)
 
 def init_db():
     """Initialize database with necessary configuration"""
-    with app.app_context():
-        # SQLite-specific pragma (only for local dev)
-        if 'sqlite' in app.config['SQLALCHEMY_DATABASE_URI']:
+    # SQLite-specific pragma (only for local dev)
+    if 'sqlite' in app.config['SQLALCHEMY_DATABASE_URI']:
+        with app.app_context():
             @db.event.listens_for(db.engine, "connect")
             def set_sqlite_pragma(dbapi_connection, connection_record):
                 cursor = dbapi_connection.cursor()
                 cursor.execute("PRAGMA foreign_keys=ON")
                 cursor.close()
 
+    with app.app_context():
         db.create_all()
-
 
 # ============ Page Routes ============
 
@@ -54,7 +82,92 @@ def init_db():
 def index():
     """Main page"""
     products = Product.query.order_by(Product.created_at.desc()).all()
-    return render_template('index.html', products=products)
+    return render_template('index.html', products=products, user=current_user)
+
+
+# ============ Auth Routes ============
+
+@app.route('/auth/google/login')
+def google_login():
+    """Redirect to Google OAuth"""
+    redirect_uri = url_for('google_callback', _external=True)
+    return oauth.google.authorize_redirect(redirect_uri)
+
+
+@app.route('/auth/google/callback')
+def google_callback():
+    """Handle Google OAuth callback"""
+    try:
+        token = oauth.google.authorize_access_token()
+        user_info = token.get('userinfo')
+        
+        if not user_info:
+            return redirect(url_for('index'))
+        
+        # Find existing user by google_id or email
+        user = User.query.filter(
+            (User.google_id == user_info['sub']) | 
+            (User.email == user_info['email'])
+        ).first()
+        
+        if user:
+            # Update existing user with Google info
+            user.google_id = user_info['sub']
+            user.name = user_info.get('name')
+            user.picture = user_info.get('picture')
+        else:
+            # Create new user
+            user = User(
+                google_id=user_info['sub'],
+                email=user_info['email'],
+                name=user_info.get('name'),
+                picture=user_info.get('picture')
+            )
+            db.session.add(user)
+        
+        db.session.commit()
+        login_user(user)
+        
+        return redirect(url_for('index'))
+        
+    except Exception as e:
+        print(f"OAuth error: {e}")
+        return redirect(url_for('index'))
+
+
+@app.route('/auth/logout')
+def logout():
+    """Log out current user"""
+    logout_user()
+    return redirect(url_for('index'))
+
+
+@app.route('/login-prompt')
+def login_prompt():
+    """Show login prompt when authentication is required"""
+    return redirect(url_for('index'))
+
+
+@app.route('/api/user')
+def get_current_user():
+    """Get current logged-in user info"""
+    if current_user.is_authenticated:
+        return jsonify({
+            'authenticated': True,
+            'user': current_user.to_dict()
+        })
+    return jsonify({'authenticated': False})
+
+
+@app.route('/api/user/products')
+def get_user_products():
+    """Get products tracked by the logged-in user"""
+    if not current_user.is_authenticated:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    # Get all products this user is tracking
+    products = current_user.tracked_products
+    return jsonify([p.to_dict() for p in products])
 
 
 # ============ API Routes ============
@@ -85,9 +198,15 @@ def track_product():
     if not url:
         return jsonify({'error': 'URL is required'}), 400
     
-    # Check if already tracking
+    # Check if already tracking this product globally
     existing = Product.query.filter_by(url=url).first()
+    
     if existing:
+        # If user is logged in, associate the existing product with them
+        if current_user.is_authenticated:
+            if existing not in current_user.tracked_products:
+                current_user.tracked_products.append(existing)
+                db.session.commit()
         return jsonify({
             'message': 'Product already tracked',
             'product': existing.to_dict()
@@ -116,6 +235,10 @@ def track_product():
         )
         db.session.add(product)
         db.session.flush()  # Get the ID
+        
+        # Associate with logged-in user
+        if current_user.is_authenticated:
+            current_user.tracked_products.append(product)
         
         # Add initial price to history
         if current_price:
@@ -159,8 +282,15 @@ def create_alert():
     data = request.get_json()
     
     product_id = data.get('product_id')
-    email = data.get('email', '').strip()
     target_price = data.get('target_price')
+    
+    # For logged-in users, use their verified email
+    if current_user.is_authenticated:
+        email = current_user.email
+        user_id = current_user.id
+    else:
+        email = data.get('email', '').strip()
+        user_id = None
     
     if not all([product_id, email, target_price]):
         return jsonify({'error': 'product_id, email, and target_price are required'}), 400
@@ -170,22 +300,30 @@ def create_alert():
     except ValueError:
         return jsonify({'error': 'Invalid target price'}), 400
     
-    from emailer import send_alert_confirmation
+
     
     product = db.session.get(Product, product_id)
     if not product:
         abort(404)
     
-    # Check if alert already exists
-    existing = PriceAlert.query.filter_by(
-        product_id=product_id,
-        email=email,
-        triggered=False
-    ).first()
+    # Check if alert already exists (match by email or user_id)
+    if user_id:
+        existing = PriceAlert.query.filter_by(
+            product_id=product_id,
+            user_id=user_id,
+            triggered=False
+        ).first()
+    else:
+        existing = PriceAlert.query.filter_by(
+            product_id=product_id,
+            email=email,
+            triggered=False
+        ).first()
     
     if existing:
         # Update existing alert
         existing.target_price = target_price
+        existing.user_id = user_id  # Update user_id if they logged in
         
         # Ensure it has a token for unsubscription
         if not existing.token:
@@ -205,6 +343,7 @@ def create_alert():
     alert = PriceAlert(
         product_id=product_id,
         email=email,
+        user_id=user_id,
         target_price=target_price,
         token=str(uuid.uuid4())
     )
@@ -263,7 +402,7 @@ def refresh_product(product_id):
     product.last_checked = datetime.now(timezone.utc)
     
     # Check if any alerts should be triggered
-    from emailer import send_price_alert
+
     active_alerts = PriceAlert.query.filter_by(
         product_id=product.id,
         triggered=False
@@ -345,8 +484,7 @@ def test_scheduler():
 # ============ Run App ============
 
 if __name__ == '__main__':
-    import os
-    
+
     # Initialize database only in development
     if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
         init_db()
