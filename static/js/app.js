@@ -4,6 +4,7 @@
 let currentProduct = null;
 let productToDelete = null;
 let priceChart = null;
+let currentUser = null; // Logged-in user info
 
 // DOM Elements
 const trackForm = document.getElementById('trackForm');
@@ -17,9 +18,24 @@ const productsList = document.getElementById('productsList');
 
 // ============ Event Listeners ============
 
-document.addEventListener('DOMContentLoaded', () => {
-    loadLocalProducts();
-    // refreshAllPrices(); // Disabled: Only refresh on user request or daily job
+document.addEventListener('DOMContentLoaded', async () => {
+    // Read auth state from body data attributes (set by server)
+    const isAuthenticated = document.body.dataset.authenticated === 'true';
+    const userEmail = document.body.dataset.userEmail;
+
+
+
+    if (isAuthenticated && userEmail) {
+        currentUser = { email: userEmail };
+
+        // Logged-in users: load products from server (synced across devices)
+        await loadServerProducts();
+    } else {
+
+        // Guest users: load products from localStorage
+        loadLocalProducts();
+    }
+
 });
 
 trackForm.addEventListener('submit', async (e) => {
@@ -73,35 +89,58 @@ document.getElementById('confirmDeleteBtn')?.addEventListener('click', () => {
 async function trackProduct(url) {
     setLoading(true);
 
+
     try {
-        // 1. Scrape data from server (stateless)
-        const response = await fetch('/api/scrape', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ url })
-        });
+        if (currentUser) {
 
-        const data = await response.json();
+            // Logged-in users: save to server for cross-device sync
+            const response = await fetch('/api/track', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url })
+            });
 
-        if (!response.ok) {
-            throw new Error(data.error || 'Failed to track product');
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to track product');
+            }
+
+            // Add to local serverProducts array and re-render
+            const product = data.product;
+            serverProducts.push(product);
+            currentProduct = product;
+            displayProduct(currentProduct);
+            renderServerProductsList();
+            showToast('Product tracked and synced to your account!', 'success');
+
+        } else {
+            // Guest users: save to localStorage only
+            const response = await fetch('/api/scrape', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to track product');
+            }
+
+            const product = {
+                url: url,
+                ...data // name, current_price, list_price, image_url
+            };
+
+            const savedProduct = Storage.saveProduct(product);
+            currentProduct = savedProduct;
+            displayProduct(currentProduct);
+            renderProductsList();
+            showToast('Product tracked locally!', 'success');
         }
 
-        // 2. Save to Local Storage
-        const product = {
-            url: url,
-            ...data // name, current_price, list_price, image_url
-        };
-
-        const savedProduct = Storage.saveProduct(product);
-
-        // 3. Update UI
-        currentProduct = savedProduct;
-        displayProduct(currentProduct);
-        showToast('Product tracked locally!', 'success');
         urlInput.value = '';
-
-        renderProductsList(); // Re-render list from local storage
 
     } catch (error) {
         showToast(error.message, 'error');
@@ -153,41 +192,9 @@ async function refreshProduct(productId) {
     }
 }
 
-async function refreshAllPrices() {
-    const products = Storage.getProducts();
-    if (products.length === 0) return;
 
-    console.log("Auto-refreshing prices...");
-
-    for (const product of products) {
-        try {
-            const response = await fetch('/api/scrape', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url: product.url })
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                Storage.updateProduct(product.id, {
-                    current_price: data.current_price,
-                    list_price: data.list_price,
-                    last_checked: new Date().toISOString()
-                });
-            }
-        } catch (e) {
-            console.error("Failed to auto-refresh", product.name, e);
-        }
-    }
-    renderProductsList();
-}
 
 async function saveAlert() {
-    // Local alert logic (placeholder for now, or sync with server if user authenticated)
-    // For anonymous users, we can't send emails easily without backend storage.
-    // OPTION: We could send the alert config to server to store in a 'guest_alerts' table,
-    // but the prompt asked for localStorage focus. 
-    // For now, let's just save the target price locally and visually indicate it.
 
     const targetPrice = document.getElementById('targetPrice').value;
     const emailInput = document.getElementById('alertEmail');
@@ -198,10 +205,8 @@ async function saveAlert() {
         return;
     }
 
-    // For now, since we don't have a full auth system, 
-    // we always require an email if it's not already stored/known.
-    // The user prompt implies a login check, but we'll stick to the input check for now.
-    if (!email) {
+    // Only require email input if user is not logged in
+    if (!currentUser && !email) {
         showToast('Please enter your email address for alerts', 'error');
         emailInput.focus();
         return;
@@ -214,7 +219,6 @@ async function saveAlert() {
 
     try {
         // 1. Ensure product exists on server to get a real DB ID
-        // (The frontend uses local string IDs, backend uses integer IDs)
         const trackResponse = await fetch('/api/track', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -241,16 +245,37 @@ async function saveAlert() {
             throw new Error(err.error || 'Failed to create alert');
         }
 
-        // 3. Update local storage metadata
-        Storage.updateProduct(currentProduct.id, {
-            alert_target: parseFloat(targetPrice),
-            alert_email: email,
-            server_id: serverProductId
-        });
+        const alertData = await alertResponse.json();
+        const updatedAlert = alertData.alert;
+
+        // 3. Update state (Local vs Server)
+        if (currentUser) {
+
+            // Find in serverProducts array and update
+            const idx = serverProducts.findIndex(p => p.id === serverProductId);
+            if (idx !== -1) {
+                serverProducts[idx].alert_target = parseFloat(targetPrice);
+                serverProducts[idx].alert_email = email;
+                // Also update alerts array if present
+                if (!serverProducts[idx].alerts) serverProducts[idx].alerts = [];
+                // Add or replace alert
+                serverProducts[idx].alerts = serverProducts[idx].alerts.filter(a => a.triggered); // remove active ones
+                serverProducts[idx].alerts.push(updatedAlert);
+            }
+            renderServerProductsList();
+        } else {
+            // Update local storage metadata for guest
+            Storage.updateProduct(currentProduct.id, {
+                alert_target: parseFloat(targetPrice),
+                alert_email: email,
+                server_id: serverProductId,
+                alert_token: updatedAlert.token // Persist token for guest
+            });
+            renderProductsList();
+        }
 
         showToast('Price alert saved! We\'ll email you when the price drops.', 'success');
         closeAlertModal();
-        renderProductsList();
 
     } catch (error) {
         showToast(error.message, 'error');
@@ -298,7 +323,91 @@ function openAlertForProduct(productId) {
     }
 }
 
+// Server product helper functions for logged-in users
+function viewServerProduct(productId) {
+    const product = serverProducts.find(p => p.id === productId);
+    if (product) {
+        // Add alert info from product.alerts if available
+        if (product.alerts && product.alerts.length > 0) {
+            const activeAlert = product.alerts.find(a => !a.triggered);
+            if (activeAlert) {
+                product.alert_target = activeAlert.target_price;
+                product.alert_email = activeAlert.email;
+            }
+        }
+        currentProduct = product;
+        displayProduct(currentProduct);
+        productDisplay.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+        showToast('Product not found', 'error');
+    }
+}
+
+function openAlertForServerProduct(productId) {
+    const product = serverProducts.find(p => p.id === productId);
+    if (product) {
+        currentProduct = product;
+        openAlertModal();
+    }
+}
+
+async function deleteServerProduct(productId) {
+    try {
+        const response = await fetch(`/api/product/${productId}`, {
+            method: 'DELETE'
+        });
+        if (response.ok) {
+            serverProducts = serverProducts.filter(p => p.id !== productId);
+            renderServerProductsList();
+            showToast('Product removed', 'success');
+
+            // Hide details if open
+            if (currentProduct && currentProduct.id === productId) {
+                productDisplay.hidden = true;
+                currentProduct = null;
+            }
+        } else {
+            showToast('Failed to remove product', 'error');
+        }
+    } catch (error) {
+        showToast('Error removing product', 'error');
+    }
+}
+
 // ============ UI Functions ============
+
+// Server-synced products for logged-in users
+let serverProducts = [];
+
+async function loadServerProducts() {
+    try {
+        const response = await fetch('/api/user/products');
+        if (response.ok) {
+            serverProducts = await response.json();
+            renderServerProductsList();
+        } else {
+            showToast('Failed to load synced products', 'error');
+            loadLocalProducts(); // Fallback to local
+        }
+    } catch (error) {
+        console.error('Error loading server products:', error);
+        loadLocalProducts(); // Fallback to local
+    }
+}
+
+function renderServerProductsList() {
+    productsList.innerHTML = '';
+
+    if (serverProducts.length === 0) {
+        productsList.innerHTML = '<p class="empty-message">No products tracked yet. Add your first product above!</p>';
+        return;
+    }
+
+    serverProducts.forEach(product => {
+        const card = createProductCard(product, true); // true = server product
+        productsList.appendChild(card);
+    });
+}
 
 function loadLocalProducts() {
     renderProductsList();
@@ -314,60 +423,68 @@ function renderProductsList() {
     }
 
     products.forEach(product => {
-        const card = document.createElement('div');
-        card.className = 'product-card glass-card';
-        card.dataset.id = product.id;
-        card.onclick = () => viewProduct(product.id);
-
-        // Calculate visuals
-        const isOnSale = product.list_price && product.current_price < product.list_price;
-        const discount = isOnSale ? Math.round((1 - product.current_price / product.list_price) * 100) : 0;
-        const lastChecked = product.last_checked ? timeAgo(new Date(product.last_checked)) : 'Never';
-        const image = product.image_url || '/static/placeholder.png';
-        const price = product.current_price ? `$${product.current_price.toFixed(2)}` : 'N/A';
-
-        let saleHtml = '';
-        if (isOnSale) {
-            saleHtml = `
-                <span class="card-list-price">$${product.list_price.toFixed(2)}</span>
-                <span class="card-discount">-${discount}%</span>
-            `;
-        }
-
-        // Alert indication
-        const hasAlert = product.alert_target > 0;
-        const alertClass = hasAlert ? 'active' : '';
-
-        card.innerHTML = `
-            <div class="card-image-container">
-                <button class="btn-card-alert ${alertClass}"
-                    onclick="event.stopPropagation(); openAlertForProduct('${product.id}')"
-                    title="Set Price Alert">
-                    <svg class="icon-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-                    </svg>
-                </button>
-                <img src="${image}" alt="${product.name}" class="card-image">
-            </div>
-            <div class="card-content">
-                <h4 class="card-title">${product.name}</h4>
-                <div class="card-price-row">
-                    <span class="card-price">${price}</span>
-                    ${saleHtml}
-                </div>
-                <p class="card-checked">Last checked: <span class="local-date">${lastChecked}</span></p>
-            </div>
-            <div class="card-actions">
-                <button class="btn-view">View Details</button>
-                <button class="btn-delete"
-                    onclick="event.stopPropagation(); openDeleteModal('${product.id}')">🗑️</button>
-            </div>
-        `;
-
+        const card = createProductCard(product, false); // false = local product
         productsList.appendChild(card);
     });
+}
+
+// Shared product card creation for both local and server products
+function createProductCard(product, isServerProduct) {
+    const card = document.createElement('div');
+    card.className = 'product-card glass-card';
+    card.dataset.id = product.id;
+    card.onclick = () => isServerProduct ? viewServerProduct(product.id) : viewProduct(product.id);
+
+    // Calculate visuals
+    const isOnSale = product.list_price && product.current_price < product.list_price;
+    const discount = isOnSale ? Math.round((1 - product.current_price / product.list_price) * 100) : 0;
+    const lastChecked = product.last_checked ? formatDate(product.last_checked) : 'Never';
+    const image = product.image_url || '/static/placeholder.png';
+    const price = product.current_price ? `$${product.current_price.toFixed(2)}` : 'N/A';
+
+    let saleHtml = '';
+    if (isOnSale) {
+        saleHtml = `
+            <span class="card-list-price">$${product.list_price.toFixed(2)}</span>
+            <span class="card-discount">-${discount}%</span>
+        `;
+    }
+
+    // For server products, alerts are always synced (logged-in user)
+    const hasAlert = isServerProduct
+        ? (product.alerts && product.alerts.some(a => !a.triggered))
+        : (product.alert_target > 0);
+    const alertClass = hasAlert ? 'active alert-synced' : '';
+
+    card.innerHTML = `
+        <div class="card-image-container">
+            <button class="btn-card-alert ${alertClass}"
+                onclick="event.stopPropagation(); ${isServerProduct ? `openAlertForServerProduct(${product.id})` : `openAlertForProduct('${product.id}')`}"
+                title="${hasAlert ? 'Alert active' : 'Set Price Alert'}">
+                <svg class="icon-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+            </button>
+            <img src="${image}" alt="${product.name}" class="card-image">
+        </div>
+        <div class="card-content">
+            <h4 class="card-title">${product.name}</h4>
+            <div class="card-price-row">
+                <span class="card-price">${price}</span>
+                ${saleHtml}
+            </div>
+            <p class="card-checked">Last checked: <span class="local-date">${lastChecked}</span></p>
+        </div>
+        <div class="card-actions">
+            <button class="btn-view">View Details</button>
+            <button class="btn-delete"
+                onclick="event.stopPropagation(); ${isServerProduct ? `deleteServerProduct(${product.id})` : `openDeleteModal('${product.id}')`}">🗑️</button>
+        </div>
+    `;
+
+    return card;
 }
 
 function formatDate(utcString) {
@@ -501,10 +618,46 @@ function openAlertModal() {
     document.getElementById('modalCurrentPrice').textContent = currentProduct.current_price
         ? `$${currentProduct.current_price.toFixed(2)}`
         : 'N/A';
-    document.getElementById('targetPrice').value = currentProduct.alert_target || '';
-    document.getElementById('alertEmail').value = currentProduct.alert_email || '';
+
+    // Set values
+    const targetPriceInput = document.getElementById('targetPrice');
+    const emailInput = document.getElementById('alertEmail');
+    const removeBtn = document.getElementById('removeAlertBtn');
+
+    // If tracking as server product (logged in), use product.alert_target
+    // If tracking locally, use currentProduct.alert_target
+
+    targetPriceInput.value = currentProduct.alert_target || '';
+    if (currentUser) {
+        // Email is readonly/hidden input, handled by template
+    } else {
+        emailInput.value = currentProduct.alert_email || '';
+    }
+
+    // Show/Hide Unsubscribe button if alert exists
+    // For logged-in users, find token in alerts array
+    // For guests, use alert_token from storage
+    let token = null;
+    if (currentUser) {
+        const activeAlert = (currentProduct.alerts || []).find(a => !a.triggered);
+        token = activeAlert ? activeAlert.token : null;
+    } else {
+        token = currentProduct.alert_token;
+    }
+
+    if (token) {
+        removeBtn.hidden = false;
+        removeBtn.onclick = () => {
+            window.location.href = `/unsubscribe/${token}`;
+        };
+    } else {
+        removeBtn.hidden = true;
+    }
+
     alertModal.hidden = false;
 }
+
+
 
 function closeAlertModal() {
     alertModal.hidden = true;

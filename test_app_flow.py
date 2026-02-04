@@ -9,7 +9,8 @@ os.environ['WERKZEUG_RUN_MAIN'] = 'true'
 os.environ['DATABASE_URL'] = 'sqlite:///:memory:'
 
 from app import app, db
-from models import Product, PriceAlert, PriceHistory
+from models import Product, PriceAlert, PriceHistory, User, user_products
+import flask_login
 
 class TestAEPriceTracker(unittest.TestCase):
     def setUp(self):
@@ -81,7 +82,7 @@ class TestAEPriceTracker(unittest.TestCase):
         print("  -> Success: Duplicate product correctly identified.")
 
     @patch('app.fetch_product_data')
-    @patch('emailer.send_alert_confirmation')
+    @patch('app.send_alert_confirmation')
     def test_create_alert(self, mock_email, mock_fetch):
         """Test creating a price alert"""
         print("\n[TEST] Creating a price alert...")
@@ -116,7 +117,7 @@ class TestAEPriceTracker(unittest.TestCase):
             self.assertEqual(alert.target_price, 45.00)
         print("  -> Success: Alert created in DB with unsubscribe token.")
 
-    @patch('emailer.send_alert_confirmation') 
+    @patch('app.send_alert_confirmation') 
     def test_unsubscribe(self, mock_email):
         """Test unsubscribing from alerts"""
         print("\n[TEST] Unsubscribing via token...")
@@ -170,7 +171,7 @@ class TestAEPriceTracker(unittest.TestCase):
         print("  -> Success: Product and its alerts deleted successfully.")
 
     @patch('app.fetch_product_data')
-    @patch('emailer.send_price_alert')
+    @patch('app.send_price_alert')
     def test_price_refresh_trigger_alert(self, mock_send_email, mock_fetch):
         """Test refreshing a product triggers an alert if price drops"""
         print("\n[TEST] Refreshing price and triggering alert logic...")
@@ -324,6 +325,95 @@ class TestAEPriceTracker(unittest.TestCase):
             self.assertEqual(count, 0, "Stateless scrape should NOT save to DB")
             
         print("  -> Success: Scrape returned data and DB remains empty.")
+
+    @patch('authlib.integrations.flask_client.FlaskOAuth2App.authorize_access_token')
+    def test_google_login_new_user(self, mock_token):
+        """Test Google login flow for a new user"""
+        print("\n[TEST] Verifying Google OAuth login (new user)...")
+        # Mock Google OAuth response
+        mock_token.return_value = {
+            'userinfo': {
+                'sub': 'google-123',
+                'email': 'newuser@gmail.com',
+                'name': 'New User',
+                'picture': 'http://avatar.com/p.jpg'
+            }
+        }
+
+        # Simulate callback
+        response = self.client.get('/auth/google/callback', follow_redirects=True)
+        self.assertEqual(response.status_code, 200)
+
+        # Verify DB entry
+        with app.app_context():
+            user = User.query.filter_by(google_id='google-123').first()
+            self.assertIsNotNone(user)
+            self.assertEqual(user.email, 'newuser@gmail.com')
+        print("  -> Success: New user created from OAuth data.")
+
+    def test_user_product_sync(self):
+        """Test that products tracked by user are correctly synced/retrieved"""
+        print("\n[TEST] Verifying user-specific product sync...")
+        with app.app_context():
+            # Create user
+            u = User(email='sync@test.com', name='Sync User')
+            db.session.add(u)
+            
+            # Create product
+            p = Product(url='http://sync-test', name='Synced Product', current_price=10)
+            db.session.add(p)
+            db.session.commit()
+            
+            # Manually associate
+            u.tracked_products.append(p)
+            db.session.commit()
+            uid = u.id
+
+        # Simulate login by setting session manually in test
+        with self.client.session_transaction() as sess:
+            sess['_user_id'] = str(uid)
+            sess['_fresh'] = True
+
+        # Fetch user products
+        response = self.client.get('/api/user/products')
+        self.assertEqual(response.status_code, 200)
+        data = response.get_json()
+        self.assertEqual(data[0]['name'], 'Synced Product')
+        print("  -> Success: Logged-in user correctly retrieves their synced products.")
+
+    def test_authenticated_alert_flow(self):
+        """Test that alert creation for logged-in users uses their email automatically"""
+        print("\n[TEST] Verifying authenticated alert creation...")
+        with app.app_context():
+            u = User(email='auth@test.com', name='Auth User')
+            db.session.add(u)
+            p = Product(url='http://auth-test', name='Auth Product', current_price=10)
+            db.session.add(p)
+            db.session.commit()
+            uid = u.id
+            pid = p.id
+
+        # Login
+        with self.client.session_transaction() as sess:
+            sess['_user_id'] = str(uid)
+
+        # Create alert (don't provide email in payload)
+        payload = {
+            'product_id': pid,
+            'target_price': 5.0
+        }
+        # Note: app.py create_alert handles missing email for auth'd users
+        
+        response = self.client.post('/api/alert', 
+                                  data=json.dumps(payload),
+                                  content_type='application/json')
+        
+        self.assertEqual(response.status_code, 200)
+        data = response.get_json()
+        self.assertEqual(data['alert']['email'], 'auth@test.com')
+        self.assertEqual(data['alert']['user_id'], uid)
+        print("  -> Success: Authenticated alert correctly linked to user account and email.")
+
 
 if __name__ == '__main__':
     unittest.main()
