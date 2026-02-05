@@ -73,6 +73,22 @@ def init_db():
                 cursor.execute("PRAGMA foreign_keys=ON")
                 cursor.close()
 
+    # Auto-migrate: Add is_available column if it doesn't exist
+    with app.app_context():
+        try:
+            from sqlalchemy import text
+            with db.engine.connect() as conn:
+                # SQLite PRAGMA to check columns
+                result = conn.execute(text("PRAGMA table_info(products)"))
+                columns = [row[1] for row in result.fetchall()]
+                if 'is_available' not in columns:
+                    print("Auto-migrating: Adding is_available column to products table...")
+                    conn.execute(text("ALTER TABLE products ADD COLUMN is_available BOOLEAN DEFAULT 1"))
+                    conn.commit()
+                    print("Auto-migration successful.")
+        except Exception as e:
+            print(f"Auto-migration failed: {e}")
+
     with app.app_context():
         db.create_all()
 
@@ -231,7 +247,8 @@ def track_product():
             name=product_data['name'],
             current_price=current_price,
             list_price=list_price,
-            image_url=product_data.get('image_url')
+            image_url=product_data.get('image_url'),
+            is_available=product_data.get('is_available', True)
         )
         db.session.add(product)
         db.session.flush()  # Get the ID
@@ -383,22 +400,27 @@ def refresh_product(product_id):
         abort(404)
     
     product_data = fetch_product_data(product.url)
-    if not product_data or product_data.get('current_price') is None:
-        return jsonify({'error': 'Could not fetch current price'}), 400
+    if not product_data:
+        return jsonify({'error': 'Could not fetch product data'}), 400
     
-    current_price = product_data['current_price']
+    # Allow refresh even if price is missing (e.g. out of stock)
+    current_price = product_data.get('current_price')
     list_price = product_data.get('list_price')
+    is_available = product_data.get('is_available', True)
     
-    # Add to history if price changed
-    if current_price != product.current_price:
+    # Update is_available
+    product.is_available = is_available
+    
+    # Add to history if price changed and exists
+    if current_price is not None and current_price != product.current_price:
         price_entry = PriceHistory(
             product_id=product.id,
             price=current_price
         )
         db.session.add(price_entry)
-    
-    product.current_price = current_price
-    product.list_price = list_price
+        product.current_price = current_price
+    if list_price is not None:
+        product.list_price = list_price
     product.last_checked = datetime.now(timezone.utc)
     
     # Check if any alerts should be triggered

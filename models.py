@@ -58,6 +58,7 @@ class Product(db.Model):
     current_price = db.Column(db.Float, nullable=True)
     list_price = db.Column(db.Float, nullable=True)
     image_url = db.Column(db.String(500), nullable=True)
+    is_available = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     last_checked = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     
@@ -95,7 +96,8 @@ class Product(db.Model):
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'last_checked': self.last_checked.isoformat() if self.last_checked else None,
             'price_history': [ph.to_dict() for ph in self.price_history],
-            'alerts': [a.to_dict() for a in self.alerts]
+            'alerts': [a.to_dict() for a in self.alerts],
+            'is_available': self.is_available
         }
 
 

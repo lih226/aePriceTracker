@@ -58,8 +58,14 @@ The application will be available at [http://127.0.0.1:5001](http://127.0.0.1:50
 ### Google OAuth (Required for Sync)
 1.  Go to [Google Cloud Console](https://console.cloud.google.com/apis/credentials).
 2.  Create OAuth 2.0 Web Client credentials.
-3.  Add `http://localhost:5001/auth/google/callback` to Authorized Redirect URis.
-4.  Update `.env` with your Client ID and Secret.
+3.  Add `http://localhost:5001/auth/google/callback` (Local) and `https://your-app.railway.app/auth/google/callback` (Production) to Authorized Redirect URis.
+4.  Update `.env` or Railway environment variables with your Client ID and Secret.
+
+#### Troubleshooting Redirect URI Mismatch
+If you see a `redirect_uri_mismatch` error on Railway:
+- **HTTPS**: Ensure your Authorized Redirect URI in Google Console starts with `https://`.
+- **Environment**: Set `FLASK_ENV=production` in Railway to enable HTTPS enforcement in the code.
+- **Matching**: The domain in Google Console must exactly match your Railway project domain.
 
 ### Email Settings
 To enable email notifications, set the following in your `.env` or `price_config.json`:
