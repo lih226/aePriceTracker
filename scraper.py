@@ -107,11 +107,21 @@ def fetch_from_api(product_id):
                 image_url = data['images'][0].get('url')
             
             if name:
+                # Check multiple flags, if any are True, assume available. 
+                # Only trust False if multiple signals or high-confidence ones say so.
+                is_available = True
+                flags = [data.get('isAvailable'), data.get('inStock'), data.get('isOrderable'), data.get('buyable')]
+                # Filter out None values
+                provided_flags = [f for f in flags if f is not None]
+                if provided_flags:
+                    is_available = any(provided_flags)
+
                 return {
                     'name': name,
                     'current_price': current_price,
                     'list_price': list_price,
-                    'image_url': image_url
+                    'image_url': image_url,
+                    'is_available': is_available
                 }
         
     except Exception as e:
@@ -129,20 +139,27 @@ def scrape_page(url, product_id=None):
         # Try window.__INITIAL_STATE__ (shoebox data) first as it's the most reliable for AE
         initial_state = extract_initial_state(soup, product_id)
         if initial_state:
-            return initial_state
-            
-        # Try JSON-LD second
-        json_ld_data = extract_json_ld(soup)
-        if json_ld_data:
-            return json_ld_data
+            res = initial_state
+        else:
+            # Try JSON-LD second
+            json_ld_data = extract_json_ld(soup)
+            if json_ld_data:
+                res = json_ld_data
+            else:
+                # Try __NEXT_DATA__ (Next.js sites)
+                next_data = extract_next_data(soup)
+                if next_data:
+                    res = next_data
+                else:
+                    # Fallback to traditional CSS selector scraping
+                    res = extract_from_html(soup)
         
-        # Try __NEXT_DATA__ (Next.js sites)
-        next_data = extract_next_data(soup)
-        if next_data:
-            return next_data
-        
-        # Fallback to traditional CSS selector scraping
-        return extract_from_html(soup)
+        # FINAL CHECK: If any of the above said it's available, but the HTML text says it's not
+        if res and res.get('is_available') is not False:
+            if not check_html_unavailability(soup):
+                res['is_available'] = False
+                
+        return res
     
     except Exception as e:
         print(f"Page scraping failed: {str(e)}")
@@ -206,11 +223,18 @@ def parse_json_ld(data):
     if isinstance(image_url, list) and len(image_url) > 0:
         image_url = image_url[0]
     
+    # Extract availability
+    availability = offers.get('availability')
+    is_available = True
+    if availability == 'http://schema.org/OutOfStock' or availability == 'OutOfStock':
+        is_available = False
+    
     return {
         'name': name,
         'current_price': price,
         'list_price': price, # JSON-LD usually only has one price
-        'image_url': image_url
+        'image_url': image_url,
+        'is_available': is_available
     }
 
 
@@ -229,7 +253,8 @@ def extract_next_data(soup):
                     'name': product.get('name') or product.get('productName'),
                     'current_price': float(current_price) if current_price else None,
                     'list_price': float(list_price) if list_price else None,
-                    'image_url': product.get('image') or product.get('imageUrl')
+                    'image_url': product.get('image') or product.get('imageUrl'),
+                    'is_available': product.get('isAvailable', True)
                 }
         except:
             pass
@@ -310,7 +335,8 @@ def extract_initial_state(soup, product_id=None):
                         'name': best_name,
                         'current_price': current_price or list_price,
                         'list_price': list_price or current_price,
-                        'image_url': best_image
+                        'image_url': best_image,
+                        'is_available': product.get('isAvailable', product.get('inStock', True))
                     }
             except:
                 continue
@@ -339,7 +365,8 @@ def extract_initial_state(soup, product_id=None):
                             'name': product.get('name'),
                             'current_price': float(current_price) if current_price else None,
                             'list_price': float(list_price) if list_price else None,
-                            'image_url': product.get('image')
+                            'image_url': product.get('image'),
+                            'is_available': product.get('isAvailable', product.get('inStock', True))
                         }
                 except:
                     continue
@@ -430,7 +457,15 @@ def extract_from_html(soup):
             'name': name,
             'current_price': price,
             'list_price': list_price,
-            'image_url': image_url
+            'image_url': image_url,
+            'is_available': check_html_unavailability(soup)
         }
     
     return None
+
+def check_html_unavailability(soup):
+    """Utility to check if page text indicates out of stock status"""
+    if soup.select('div[data-test-oos-label]') or soup.select('._oos-label_1bn8o3') or soup.select('.product-swatches-oos') or soup.select('._out-of-stock_1e4pqf'):
+        return False
+
+    return True

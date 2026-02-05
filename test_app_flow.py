@@ -415,5 +415,48 @@ class TestAEPriceTracker(unittest.TestCase):
         print("  -> Success: Authenticated alert correctly linked to user account and email.")
 
 
+    @patch('app.fetch_product_data')
+    def test_unavailable_product_handling(self, mock_fetch):
+        """Test handling of products that are out of stock"""
+        print("\n[TEST] Verifying unavailable product handling...")
+        
+        # 1. Track a product that is currently unavailable
+        mock_fetch.return_value = {
+            'name': 'Unavailable Hat',
+            'current_price': 5.38,
+            'list_price': 10.00,
+            'image_url': 'http://example.com/hat.jpg',
+            'is_available': False
+        }
+        
+        payload = {'url': 'https://www.ae.com/us/en/p/unavailable-hat'}
+        response = self.client.post('/api/track', 
+                                  data=json.dumps(payload),
+                                  content_type='application/json')
+        
+        self.assertEqual(response.status_code, 200)
+        data = response.get_json()
+        self.assertEqual(data['product']['is_available'], False)
+        
+        # Verify in DB
+        with app.app_context():
+            product = db.session.query(Product).first()
+            self.assertEqual(product.is_available, False)
+        
+        # 2. Mock it becoming available again
+        mock_fetch.return_value['is_available'] = True
+        mock_fetch.return_value['current_price'] = 6.00
+        
+        response = self.client.post(f"/api/refresh/{data['product']['id']}")
+        self.assertEqual(response.status_code, 200)
+        
+        # Verify in DB
+        with app.app_context():
+            product = db.session.get(Product, data['product']['id'])
+            self.assertEqual(product.is_available, True)
+            self.assertEqual(product.current_price, 6.00)
+            
+        print("  -> Success: Unavailable status correctly tracked and updated.")
+
 if __name__ == '__main__':
     unittest.main()

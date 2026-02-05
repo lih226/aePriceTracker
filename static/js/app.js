@@ -150,41 +150,89 @@ async function trackProduct(url) {
 }
 
 async function refreshProduct(productId) {
-    const product = Storage.getProduct(productId);
-    if (!product) return;
+    // 1. Identify product from either global state or local storage
+    let product = currentUser
+        ? serverProducts.find(p => p.id == productId)
+        : Storage.getProduct(productId);
 
-    // UI feedback
+    // Fallback to currentProduct if details modal is open
+    if (!product && currentProduct && currentProduct.id == productId) {
+        product = currentProduct;
+    }
+
+    if (!product) {
+        console.error('Refresh failed: Product not found', productId);
+        showToast('Could not find product to refresh', 'error');
+        return;
+    }
+
+    if (product.is_available === false) {
+        showToast('Cannot refresh unavailable product', 'warning');
+        return;
+    }
+
+    // 2. UI Loading State
     const refreshBtn = document.getElementById('refreshBtn');
     const originalText = refreshBtn.innerHTML;
     refreshBtn.disabled = true;
     refreshBtn.innerHTML = '<span class="btn-loader"></span> Refreshing...';
 
     try {
-        const response = await fetch('/api/scrape', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ url: product.url })
-        });
+        let updated;
+        if (currentUser) {
+            // Path A: Authenticated user - Sync with server
+            const response = await fetch(`/api/refresh/${productId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await response.json();
 
-        const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Server refresh failed');
 
-        if (!response.ok) {
-            throw new Error(data.error || 'Failed to refresh price');
+            updated = data.product;
+
+            // Update the global serverProducts list
+            const idx = serverProducts.findIndex(p => p.id == productId);
+            if (idx >= 0) {
+                serverProducts[idx] = updated;
+            } else {
+                serverProducts.push(updated);
+            }
+
+            // Re-render the list
+            renderServerProductsList();
+        } else {
+            // Path B: Guest user - Scrape locally and update localStorage
+            const response = await fetch('/api/scrape', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: product.url })
+            });
+            const data = await response.json();
+
+            if (!response.ok) throw new Error(data.error || 'Scrape failed');
+
+            updated = Storage.updateProduct(productId, {
+                current_price: data.current_price,
+                list_price: data.list_price,
+                is_available: data.is_available,
+                last_checked: new Date().toISOString()
+            });
+
+            // Re-render the local list
+            renderProductsList();
         }
 
-        // Update local storage
-        const updated = Storage.updateProduct(productId, {
-            current_price: data.current_price,
-            list_price: data.list_price,
-            last_checked: new Date().toISOString()
-        });
+        // 3. Update active display if looking at this product
+        if (currentProduct && currentProduct.id == productId) {
+            currentProduct = updated;
+            displayProduct(currentProduct);
+        }
 
-        currentProduct = updated;
-        displayProduct(currentProduct);
-        renderProductsList(); // Update card in list
-        showToast('Price updated!', 'success');
+        showToast('Status updated!', 'success');
 
     } catch (error) {
+        console.error('Refresh error:', error);
         showToast(error.message, 'error');
     } finally {
         refreshBtn.disabled = false;
@@ -431,9 +479,15 @@ function renderProductsList() {
 // Shared product card creation for both local and server products
 function createProductCard(product, isServerProduct) {
     const card = document.createElement('div');
-    card.className = 'product-card glass-card';
+    const isUnavailable = product.is_available === false;
+    card.className = `product-card glass-card ${isUnavailable ? 'unavailable' : ''}`;
     card.dataset.id = product.id;
-    card.onclick = () => isServerProduct ? viewServerProduct(product.id) : viewProduct(product.id);
+    card.onclick = () => {
+        if (isUnavailable) {
+            showToast('This product is currently unavailable', 'warning');
+        }
+        isServerProduct ? viewServerProduct(product.id) : viewProduct(product.id);
+    };
 
     // Calculate visuals
     const isOnSale = product.list_price && product.current_price < product.list_price;
@@ -458,9 +512,11 @@ function createProductCard(product, isServerProduct) {
 
     card.innerHTML = `
         <div class="card-image-container">
+            ${isUnavailable ? '<span class="status-badge">Unavailable</span>' : ''}
             <button class="btn-card-alert ${alertClass}"
+                ${isUnavailable ? 'disabled' : ''}
                 onclick="event.stopPropagation(); ${isServerProduct ? `openAlertForServerProduct(${product.id})` : `openAlertForProduct('${product.id}')`}"
-                title="${hasAlert ? 'Alert active' : 'Set Price Alert'}">
+                title="${isUnavailable ? 'Product Unavailable' : (hasAlert ? 'Alert active' : 'Set Price Alert')}">
                 <svg class="icon-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
@@ -515,6 +571,25 @@ function displayProduct(product) {
     document.getElementById('currentPrice').textContent = product.current_price
         ? `$${product.current_price.toFixed(2)}`
         : 'N/A';
+
+    const setAlertBtn = document.getElementById('setAlertBtn');
+    const refreshBtn = document.getElementById('refreshBtn');
+
+    if (product.is_available === false) {
+        setAlertBtn.disabled = true;
+        setAlertBtn.title = 'Product is currently unavailable';
+        refreshBtn.disabled = true;
+        refreshBtn.title = 'Cannot refresh unavailable product';
+        document.getElementById('currentPrice').style.color = 'var(--text-muted)';
+        document.getElementById('productName').innerHTML = `${product.name} <small style="color: var(--accent-danger); font-size: 0.8rem;">(UNAVAILABLE)</small>`;
+    } else {
+        setAlertBtn.disabled = false;
+        setAlertBtn.title = 'Set Price Alert';
+        refreshBtn.disabled = false;
+        refreshBtn.title = 'Refresh product status';
+        document.getElementById('currentPrice').style.color = '';
+        document.getElementById('productName').textContent = product.name;
+    }
 
     const listPriceElem = document.getElementById('listPrice');
     const discountBadgeElem = document.getElementById('discountBadge');
