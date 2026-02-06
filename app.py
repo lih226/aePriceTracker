@@ -323,57 +323,62 @@ def create_alert():
     if not product:
         abort(404)
     
-    # Check if alert already exists (match by email or user_id)
-    if user_id:
-        existing = PriceAlert.query.filter_by(
-            product_id=product_id,
-            user_id=user_id,
-            triggered=False
-        ).first()
-    else:
-        existing = PriceAlert.query.filter_by(
+    try:
+        # Check if alert already exists (match by email or user_id)
+        if user_id:
+            existing = PriceAlert.query.filter_by(
+                product_id=product_id,
+                user_id=user_id,
+                triggered=False
+            ).first()
+        else:
+            existing = PriceAlert.query.filter_by(
+                product_id=product_id,
+                email=email,
+                triggered=False
+            ).first()
+        
+        if existing:
+            # Update existing alert
+            existing.target_price = target_price
+            existing.user_id = user_id  # Update user_id if they logged in
+            
+            # Ensure it has a token for unsubscription
+            if not existing.token:
+                existing.token = str(uuid.uuid4())
+                
+            db.session.commit()
+            
+            # Send confirmation for update
+            send_alert_confirmation(email, product.name, product.url, target_price, existing.token)
+            
+            return jsonify({
+                'message': 'Alert updated successfully',
+                'alert': existing.to_dict()
+            })
+        
+        # Create new alert with secure token
+        alert = PriceAlert(
             product_id=product_id,
             email=email,
-            triggered=False
-        ).first()
-    
-    if existing:
-        # Update existing alert
-        existing.target_price = target_price
-        existing.user_id = user_id  # Update user_id if they logged in
-        
-        # Ensure it has a token for unsubscription
-        if not existing.token:
-            existing.token = str(uuid.uuid4())
-            
+            user_id=user_id,
+            target_price=target_price,
+            token=str(uuid.uuid4())
+        )
+        db.session.add(alert)
         db.session.commit()
         
-        # Send confirmation for update
-        send_alert_confirmation(email, product.name, product.url, target_price, existing.token)
+        # Send confirmation for new alert
+        send_alert_confirmation(email, product.name, product.url, target_price, alert.token)
         
         return jsonify({
-            'message': 'Alert updated successfully',
-            'alert': existing.to_dict()
+            'message': 'Alert created successfully',
+            'alert': alert.to_dict()
         })
-    
-    # Create new alert with secure token
-    alert = PriceAlert(
-        product_id=product_id,
-        email=email,
-        user_id=user_id,
-        target_price=target_price,
-        token=str(uuid.uuid4())
-    )
-    db.session.add(alert)
-    db.session.commit()
-    
-    # Send confirmation for new alert
-    send_alert_confirmation(email, product.name, product.url, target_price, alert.token)
-    
-    return jsonify({
-        'message': 'Alert created successfully',
-        'alert': alert.to_dict()
-    })
+    except Exception as e:
+        db.session.rollback()
+        print(f"Alert creation error: {str(e)}")
+        return jsonify({'error': f'Server error: {str(e)}'}), 500
 
 
 @app.route('/api/product/<int:product_id>', methods=['DELETE'])

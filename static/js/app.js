@@ -273,7 +273,16 @@ async function saveAlert() {
             body: JSON.stringify({ url: currentProduct.url })
         });
 
-        if (!trackResponse.ok) throw new Error('Failed to sync product with server');
+        if (!trackResponse.ok) {
+            let errorMsg = 'Failed to sync product with server';
+            try {
+                const err = await trackResponse.json();
+                errorMsg = err.error || errorMsg;
+            } catch (e) {
+                errorMsg = `Server error (${trackResponse.status})`;
+            }
+            throw new Error(errorMsg);
+        }
         const trackData = await trackResponse.json();
         const serverProductId = trackData.product.id;
 
@@ -289,8 +298,14 @@ async function saveAlert() {
         });
 
         if (!alertResponse.ok) {
-            const err = await alertResponse.json();
-            throw new Error(err.error || 'Failed to create alert');
+            let errorMsg = 'Failed to create alert';
+            try {
+                const err = await alertResponse.json();
+                errorMsg = err.error || errorMsg;
+            } catch (e) {
+                errorMsg = `Server error (${alertResponse.status})`;
+            }
+            throw new Error(errorMsg);
         }
 
         const alertData = await alertResponse.json();
