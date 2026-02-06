@@ -117,7 +117,7 @@ def send_price_alert(recipient_email, product_name, product_url, target_price, c
         msg.attach(MIMEText(html_body, 'html'))
         
         # Connect and send
-        server = smtplib.SMTP(config['server'], config['port'])
+        server = smtplib.SMTP(config['server'], config['port'], timeout=10)
         server.starttls()
         server.login(config['email'], config['password'])
         server.send_message(msg)
@@ -191,7 +191,7 @@ def send_alert_confirmation(recipient_email, product_name, product_url, target_p
         
         msg.attach(MIMEText(html_body, 'html'))
         
-        server = smtplib.SMTP(config['server'], config['port'])
+        server = smtplib.SMTP(config['server'], config['port'], timeout=10)
         server.starttls()
         server.login(config['email'], config['password'])
         server.send_message(msg)
