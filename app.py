@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 import os
 import atexit
 import uuid
+import threading
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -73,24 +74,36 @@ def init_db():
                 cursor.execute("PRAGMA foreign_keys=ON")
                 cursor.close()
 
-    # Auto-migrate: Add is_available column if it doesn't exist
+    # Auto-migrate: Add missing columns if they don't exist
     with app.app_context():
         try:
-            from sqlalchemy import text
-            with db.engine.connect() as conn:
-                # SQLite PRAGMA to check columns
-                result = conn.execute(text("PRAGMA table_info(products)"))
-                columns = [row[1] for row in result.fetchall()]
-                if 'is_available' not in columns:
-                    print("Auto-migrating: Adding is_available column to products table...")
+            from sqlalchemy import text, inspect
+            inspector = inspect(db.engine)
+            
+            # Check products table
+            columns = [c['name'] for c in inspector.get_columns('products')]
+            if 'is_available' not in columns:
+                print("Auto-migrating: Adding is_available column to products table...")
+                with db.engine.begin() as conn:
                     conn.execute(text("ALTER TABLE products ADD COLUMN is_available BOOLEAN DEFAULT 1"))
-                    conn.commit()
-                    print("Auto-migration successful.")
+                print("is_available migration successful.")
+            
+            # Check price_alerts table
+            columns = [c['name'] for c in inspector.get_columns('price_alerts')]
+            if 'token' not in columns:
+                print("Auto-migrating: Adding token column to price_alerts table...")
+                with db.engine.begin() as conn:
+                    conn.execute(text("ALTER TABLE price_alerts ADD COLUMN token VARCHAR(100)"))
+                print("token migration successful.")
+                
         except Exception as e:
-            print(f"Auto-migration failed: {e}")
+            print(f"Auto-migration warning (this may be normal if columns exist): {e}")
 
     with app.app_context():
         db.create_all()
+
+# Ensure database is initialized on startup (all environments)
+init_db()
 
 # ============ Page Routes ============
 
@@ -313,17 +326,15 @@ def create_alert():
         return jsonify({'error': 'product_id, email, and target_price are required'}), 400
     
     try:
-        target_price = float(target_price)
-    except ValueError:
-        return jsonify({'error': 'Invalid target price'}), 400
-    
-
-    
-    product = db.session.get(Product, product_id)
-    if not product:
-        abort(404)
-    
-    try:
+        try:
+            target_price = float(target_price)
+        except ValueError:
+            return jsonify({'error': 'Invalid target price'}), 400
+            
+        product = db.session.get(Product, product_id)
+        if not product:
+            return jsonify({'error': 'Product not found'}), 404
+        
         # Check if alert already exists (match by email or user_id)
         if user_id:
             existing = PriceAlert.query.filter_by(
@@ -350,7 +361,11 @@ def create_alert():
             db.session.commit()
             
             # Send confirmation for update
-            send_alert_confirmation(email, product.name, product.url, target_price, existing.token)
+            # Send confirmation in background thread to prevent UI hangs
+            threading.Thread(
+                target=send_alert_confirmation, 
+                args=(email, product.name, product.url, target_price, existing.token)
+            ).start()
             
             return jsonify({
                 'message': 'Alert updated successfully',
@@ -369,7 +384,11 @@ def create_alert():
         db.session.commit()
         
         # Send confirmation for new alert
-        send_alert_confirmation(email, product.name, product.url, target_price, alert.token)
+        # Send confirmation in background thread to prevent UI hangs
+        threading.Thread(
+            target=send_alert_confirmation, 
+            args=(email, product.name, product.url, target_price, alert.token)
+        ).start()
         
         return jsonify({
             'message': 'Alert created successfully',
@@ -512,10 +531,6 @@ def test_scheduler():
 
 if __name__ == '__main__':
 
-    # Initialize database only in development
-    if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
-        init_db()
-    
     print("\n" + "="*50)
     print("  AE Price Tracker - Web Application")
     print("  Running at: http://127.0.0.1:5001")
