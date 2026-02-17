@@ -30,6 +30,11 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
 }
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key-please-change')
 
+# Debug Railway DB configuration
+db_type = "Postgres" if "postgresql" in database_url else "SQLite"
+masked_url = database_url.split('@')[-1] if '@' in database_url else database_url
+print(f"DATABASE: Using {db_type} ({masked_url})")
+
 # Security settings for production
 if os.environ.get('FLASK_ENV') == 'production':
     app.config['SESSION_COOKIE_SECURE'] = True
@@ -37,6 +42,7 @@ if os.environ.get('FLASK_ENV') == 'production':
     # Trust Railway's reverse proxy for HTTPS detection
     from werkzeug.middleware.proxy_fix import ProxyFix
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
+    print("PRODUCTION: ProxyFix and Secure Cookies enabled.")
 
 # Initialize database
 db.init_app(app)
@@ -104,6 +110,30 @@ def init_db():
 
 # Ensure database is initialized on startup (all environments)
 init_db()
+
+# ============ Diagnostic Routes ============
+
+@app.route('/api/diag')
+def api_diag():
+    """Diagnostic info for Railway debugging"""
+    from emailer import get_config
+    email_config = get_config()
+    db_uri = app.config.get('SQLALCHEMY_DATABASE_URI', '')
+    
+    return jsonify({
+        'database_type': 'Postgres' if 'postgresql' in db_uri else 'SQLite',
+        'database_url_masked': db_uri.split('@')[-1] if '@' in db_uri else db_uri,
+        'email_setup': {
+            'email_provided': bool(email_config.get('email')),
+            'password_provided': bool(email_config.get('password')),
+            'smtp_server': email_config.get('server'),
+            'smtp_port': email_config.get('port'),
+            'base_url': email_config.get('base_url')
+        },
+        'environment': os.environ.get('FLASK_ENV', 'development'),
+        'railway_env': bool(os.environ.get('RAILWAY_STATIC_URL'))
+    })
+
 
 # ============ Page Routes ============
 
