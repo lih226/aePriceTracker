@@ -142,6 +142,7 @@ def send_alert_confirmation(recipient_email, product_name, product_url, target_p
     unsub_link = f"{base_url}/unsubscribe/{token}" if token else None
 
     if not config['email'] or not config['password']:
+        print(f"DEBUG EMAIL: Missing SMTP credentials (email={bool(config['email'])}, pass={bool(config['password'])}) for {recipient_email}")
         print(f"""
         ========== ALERT CONFIRMED (Email not configured) ==========
         To: {recipient_email}
@@ -191,6 +192,7 @@ def send_alert_confirmation(recipient_email, product_name, product_url, target_p
         
         msg.attach(MIMEText(html_body, 'html'))
         
+        print(f"DEBUG EMAIL: Connecting to {config['server']}:{config['port']} for {recipient_email}")
         server = smtplib.SMTP(config['server'], config['port'], timeout=10)
         server.starttls()
         server.login(config['email'], config['password'])
