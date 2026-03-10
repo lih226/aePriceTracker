@@ -42,7 +42,7 @@ def update_all_prices(app):
                         product.current_price = current_price
                         print(f"    Price changed: ${product.current_price} → ${current_price}")
                     
-                    if list_price is not None:
+                    if list_price is not None and product.list_price is None:
                         product.list_price = list_price
                     
                     # Check alerts only if available and price exists

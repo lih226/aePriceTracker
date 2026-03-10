@@ -131,7 +131,8 @@ def api_diag():
             'base_url': email_config.get('base_url')
         },
         'environment': os.environ.get('FLASK_ENV', 'development'),
-        'railway_env': bool(os.environ.get('RAILWAY_STATIC_URL'))
+        'railway_env': bool(os.environ.get('RAILWAY_STATIC_URL')),
+        'available_env_keys': sorted(list(os.environ.keys()))
     })
 
 
@@ -473,7 +474,7 @@ def refresh_product(product_id):
         )
         db.session.add(price_entry)
         product.current_price = current_price
-    if list_price is not None:
+    if list_price is not None and product.list_price is None:
         product.list_price = list_price
     product.last_checked = datetime.now(timezone.utc)
     

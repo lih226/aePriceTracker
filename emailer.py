@@ -7,6 +7,7 @@ import os
 
 import json
 
+
 # Email configuration - fetched from price_config.json or environment variables
 def get_config():
     # Default values
@@ -42,6 +43,8 @@ def get_config():
 
 
 
+
+
 def send_price_alert(recipient_email, product_name, product_url, target_price, current_price, list_price=None, token=None):
     """
     Send a price alert email to the user.
@@ -55,20 +58,6 @@ def send_price_alert(recipient_email, product_name, product_url, target_price, c
     is_on_sale = list_price and current_price < list_price
     discount = round((1 - current_price / list_price) * 100) if is_on_sale else 0
 
-    if not config['email'] or not config['password']:
-        print(f"""
-        ========== PRICE ALERT (Email not configured) ==========
-        To: {recipient_email}
-        Product: {product_name}
-        URL: {product_url}
-        Target Price: ${target_price:.2f}
-        Current Price: ${current_price:.2f}
-        List Price: {f'${list_price:.2f}' if list_price else 'N/A'}
-        Sale: {'Yes (' + str(discount) + '% off)' if is_on_sale else 'No'}
-        =========================================================
-        """)
-        return True
-    
     try:
         subject = f"🎉 Price Alert: {product_name} is now ${current_price:.2f}!"
         
@@ -116,6 +105,22 @@ def send_price_alert(recipient_email, product_name, product_url, target_price, c
         
         msg.attach(MIMEText(html_body, 'html'))
         
+        # Priority: SMTP -> Mock
+        if not config['email'] or not config['password']:
+            print(f"DEBUG EMAIL: No SMTP credentials set for {recipient_email}")
+            print(f"""
+            ========== PRICE ALERT (Email not configured) ==========
+            To: {recipient_email}
+            Product: {product_name}
+            URL: {product_url}
+            Target Price: ${target_price:.2f}
+            Current Price: ${current_price:.2f}
+            List Price: {f'${list_price:.2f}' if list_price else 'N/A'}
+            Sale: {'Yes (' + str(discount) + '% off)' if is_on_sale else 'No'}
+            =========================================================
+            """)
+            return True
+            
         # Connect and send
         server = smtplib.SMTP(config['server'], config['port'], timeout=10)
         server.starttls()
@@ -140,18 +145,6 @@ def send_alert_confirmation(recipient_email, product_name, product_url, target_p
     if not base_url.startswith('http'):
         base_url = f"https://{base_url}"
     unsub_link = f"{base_url}/unsubscribe/{token}" if token else None
-
-    if not config['email'] or not config['password']:
-        print(f"DEBUG EMAIL: Missing SMTP credentials (email={bool(config['email'])}, pass={bool(config['password'])}) for {recipient_email}")
-        print(f"""
-        ========== ALERT CONFIRMED (Email not configured) ==========
-        To: {recipient_email}
-        Product: {product_name}
-        URL: {product_url}
-        Target Price: ${target_price:.2f}
-        =============================================================
-        """)
-        return True
 
     try:
         subject = f"🔔 Alert Set: Tracking {product_name}"
@@ -192,6 +185,21 @@ def send_alert_confirmation(recipient_email, product_name, product_url, target_p
         
         msg.attach(MIMEText(html_body, 'html'))
         
+        # Priority: SMTP -> Mock
+
+        if not config['email'] or not config['password']:
+            print(f"DEBUG EMAIL: Missing SMTP credentials (email={bool(config['email'])}, pass={bool(config['password'])}) for {recipient_email}")
+            print(f"""
+            ========== ALERT CONFIRMED (Email not configured) ==========
+            To: {recipient_email}
+            Product: {product_name}
+            URL: {product_url}
+            Target Price: ${target_price:.2f}
+            =============================================================
+            """)
+            return True
+        
+        # Connect and send
         print(f"DEBUG EMAIL: Connecting to {config['server']}:{config['port']} for {recipient_email}")
         server = smtplib.SMTP(config['server'], config['port'], timeout=10)
         server.starttls()

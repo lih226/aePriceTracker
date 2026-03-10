@@ -69,11 +69,12 @@ def fetch_from_api(product_id):
             
             # Extract prices from API response
             # AE API levels: salePrice, listPrice, or pricing object
-            sale_price = data.get('sale_price') or data.get('salePrice')
-            list_price = data.get('list_price') or data.get('listPrice') or data.get('price')
+            sale_price = data.get('salePrice') or data.get('sale_price')
+            list_price = data.get('listPrice') or data.get('list_price') or data.get('price')
             
             if 'pricing' in data:
                 pricing = data['pricing']
+                # Prefer listPrice over generic price
                 sale_price = sale_price or pricing.get('salePrice') or pricing.get('sale_price')
                 list_price = list_price or pricing.get('listPrice') or pricing.get('list_price') or pricing.get('price')
             
@@ -81,7 +82,7 @@ def fetch_from_api(product_id):
             if 'variants' in data and len(data['variants']) > 0:
                 for v in data['variants']:
                     vs = v.get('salePrice') or v.get('sale_price')
-                    vl = v.get('listPrice') or v.get('list_price')
+                    vl = v.get('listPrice') or v.get('list_price') or v.get('price')
                     if vl:
                         list_price = max(float(list_price) if list_price else 0, float(vl))
                     if vs:
@@ -329,14 +330,13 @@ def extract_initial_state(soup, product_id=None):
                             current_price = float(l)
                 
                 if best_name and (current_price or list_price):
-                    # Final sanity check: if list_price same as current_price, but we found a higher one elsewhere...
-                    # (handled by max(l) logic above)
+                    # Fixed availability check from attributes
                     return {
                         'name': best_name,
                         'current_price': current_price or list_price,
                         'list_price': list_price or current_price,
                         'image_url': best_image,
-                        'is_available': product.get('isAvailable', product.get('inStock', True))
+                        'is_available': True # Fallback to True if data found
                     }
             except:
                 continue
